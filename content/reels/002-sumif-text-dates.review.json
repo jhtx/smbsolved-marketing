@@ -1,0 +1,98 @@
+{
+  "verdict": "pass",
+  "findings": [
+    {
+      "severity": "minor",
+      "where": "script line 7 caption \"Text is never a date.\"",
+      "issue": "Slightly overstated as a general rule. It is true for the comparison criteria used here (\">=\"&DATE(...)), but SUMIFS/COUNTIF do coerce text that parses as a date or number under an equality criterion. An accountant who takes the caption literally will be surprised the first time SUMIF(range,\"03/04/2026\") does match a text date.",
+      "fix": "Tighten to the mechanism, e.g. \"A date criterion\\nskips text.\" or narrate \"SUMIFS won't compare text to a date criterion.\""
+    },
+    {
+      "severity": "minor",
+      "where": "script lines 7 and 8 (both cue-less, between markError and typeFix)",
+      "issue": "~44 words, roughly 15 seconds, with the sheet frozen on the markError state. Longest dead stretch in the reel and it sits right where attention drops.",
+      "fix": "Attach `showAlignment` to line 7 so TEXT pills land on the date cells while the cause is explained (confirm the renderer handles three pills rather than two), or trim line 7 to one sentence."
+    },
+    {
+      "severity": "minor",
+      "where": "script line 8 VO / payoff.sub",
+      "issue": "The locale caveat — DATEVALUE parses per the machine's regional date format, so this exact formula returns #VALUE! on a dd/mm install — is only on screen in the payoff sub, never spoken. \"No blanks in the range\" is spoken instead, and there are no blanks in this dataset, so it spends the caveat slot on the risk that isn't present.",
+      "fix": "Swap it in line 8: \"That's DATEVALUE — text only, and it reads your regional date format.\" Drop the blanks clause."
+    },
+    {
+      "severity": "minor",
+      "where": "payoff.sub",
+      "issue": "66 characters on one line under a two-line headline; long for the overlay and it carries two caveats (text-only, locale) at once.",
+      "fix": "Cut to one, e.g. \"DATEVALUE reads text in your regional date format.\""
+    },
+    {
+      "severity": "minor",
+      "where": "script line 9 \"SUMIFS can't take a converted array, so SUMPRODUCT runs the same two tests.\"",
+      "issue": "This is a second teaching point riding along with the main one. It is defensible — it's the mechanic of the fix — but it is the only line that could be cut if the reel runs long.",
+      "fix": "Keep, but if length pushes past 55s cut this to \"SUMPRODUCT runs the same two tests on converted dates\" and drop the SUMIFS-array explanation."
+    },
+    {
+      "severity": "minor",
+      "where": "script line 10 VO \"...dollars and twenty five cents\"",
+      "issue": "Column B is formatted #,##0.00 with no currency symbol, so \"dollars\" is spoken but not shown.",
+      "fix": "Either read it as \"Two thousand one hundred three, twenty five\" or leave the amount unspoken: \"There it is. March ties out.\""
+    },
+    {
+      "severity": "minor",
+      "where": "whole reel vs reel 001",
+      "issue": "Second consecutive reel whose root cause is \"the export gave you text instead of a number/date.\" The narration, hook and payoff are genuinely different and the contrast (001 errors loudly, 002 fails silently) is a good pairing, but a third text-coercion reel would read as a template.",
+      "fix": "No change here. Pull the next backlog topic from a different failure mode — merged cells, trailing spaces from the export, subtotal rows inside the data, cross-sheet references after a re-export."
+    }
+  ],
+  "hook": {
+    "score": 4,
+    "note": "\"March totals zero. The GL says otherwise.\" — 7 on-screen words, a symptom a controller has personally stared at, and the 0.00 lead makes it read instantly. Not a 5 only because \"March totals zero\" needs the second line to become alarming; \"The GL says otherwise\" is doing the work. A version that names the silence (\"No error. Just zero.\") would land a beat faster."
+  },
+  "claims": [
+    {
+      "claim": "SUMIFS with \">=\"&DATE(2026,3,1) / \"<\"&DATE(2026,4,1) returns 0 when column A holds text dates",
+      "verdict": "true",
+      "note": "Confirmed by verification; comparison criteria against a numeric/date value skip text entries entirely."
+    },
+    {
+      "claim": "\"Text is never a date\" / \"no row qualifies\"",
+      "verdict": "overstated",
+      "note": "Correct for the comparison operators used here. SUMIFS/COUNTIF do coerce text that parses as a date under an equality criterion, so the blanket phrasing is broader than Excel's behaviour."
+    },
+    {
+      "claim": "SUMIFS can't take a converted array as a criteria range",
+      "verdict": "true",
+      "note": "criteria_range must be a range reference; passing a computed array returns #VALUE!. SUMPRODUCT is the standard workaround."
+    },
+    {
+      "claim": "DATEVALUE only takes text",
+      "verdict": "true",
+      "note": "A serial number or a real date argument returns #VALUE!."
+    },
+    {
+      "claim": "DATEVALUE depends on the regional date format",
+      "verdict": "true",
+      "note": "Parses against the system short-date/locale settings; \"03/18/2026\" returns #VALUE! on a dd/mm install, which would error the whole SUMPRODUCT."
+    },
+    {
+      "claim": "DATEVALUE breaks on blanks in the range",
+      "verdict": "true",
+      "note": "DATEVALUE(\"\") and an empty cell inside the array both return #VALUE!, which propagates through SUMPRODUCT."
+    },
+    {
+      "claim": "All functions used run in Excel 2016/2019",
+      "verdict": "true",
+      "note": "SUMIFS, SUMPRODUCT, DATEVALUE, DATE are all legacy. SUMPRODUCT forces array evaluation, so no Ctrl+Shift+Enter and no dynamic-array dependency. No version caveat needed."
+    },
+    {
+      "claim": "Corrected total 2,103.25 for March 2026",
+      "verdict": "true",
+      "note": "1240.50 + 862.75; the 04/02/2026 line is correctly excluded by the \"< April 1\" test, so the boundary is actually demonstrated."
+    },
+    {
+      "claim": "Post copy compliance",
+      "verdict": "true",
+      "note": "First line is a plausible search phrase, 5 hashtags, \"Save this for close\" is within the allowed CTA. Description's second sentence is clunky — \"gets the period total back\" — but not a claim problem."
+    }
+  ]
+}

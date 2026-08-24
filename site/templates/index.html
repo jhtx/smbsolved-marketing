@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verified Excel templates for accountants, from SMB Solved</title>
+<meta name="description" content="Free Excel templates for accountants. Fixed asset roll-forward with book and tax depreciation, disposals, tie-out rows. No macros, Excel 2016 and later.">
+<link rel="canonical" href="https://smbsolved.com/templates/">
+
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://smbsolved.com/templates/">
+<meta property="og:site_name" content="SMB Solved">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="Verified Excel templates for accountants">
+<meta property="og:description" content="Every formula computed and checked in real Excel before publishing. Fixed asset roll-forward with book and tax depreciation, tie-out rows, no macros.">
+<meta property="og:image" content="https://smbsolved.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Verified Excel templates for accountants">
+<meta name="twitter:description" content="Every formula computed and checked in real Excel before publishing.">
+<meta name="twitter:image" content="https://smbsolved.com/og-image.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&amp;family=Archivo:wght@400;500&amp;display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper:      #FBFAF7;
+    --ink:        #16130E;
+    --body:       #3B362C;
+    --muted:      #4A4438;
+    --eyebrow:    #6B6252;
+    --rule:       #E5E1D8;
+    --accent:     #A0411F;
+    --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --sans:  Archivo, Helvetica, Arial, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0; background: var(--paper); color: var(--body);
+    font-family: var(--sans); font-size: 16.5px; line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); }
+  a:hover { color: var(--ink); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: 16px; top: 12px; background: var(--paper); padding: 8px 12px; }
+
+  .site-head { border-bottom: 1px solid var(--rule); }
+  .nav {
+    max-width: 960px; margin: 0 auto; padding: 16px 24px;
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    justify-content: space-between; gap: 10px 20px;
+  }
+  .wordmark {
+    font-family: var(--serif); font-weight: 600; font-size: 19px;
+    color: var(--ink); text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 22px; font-size: 15px; }
+  .nav-links a { color: var(--muted); text-decoration: none; }
+  .nav-links a:hover { color: var(--ink); }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .band { padding: 56px 0 60px; }
+  .band--ruled { border-top: 1px solid var(--rule); }
+
+  h1 {
+    font-family: var(--serif); font-weight: 600;
+    font-size: clamp(30px, 4.6vw, 44px); line-height: 1.16;
+    letter-spacing: -0.01em; color: var(--ink);
+    margin: 0 0 18px; max-width: 22ch; text-wrap: balance;
+  }
+  .lede {
+    font-family: var(--serif); font-size: clamp(18px, 2.4vw, 21px);
+    line-height: 1.55; color: var(--body); margin: 0 0 10px; max-width: 38rem;
+    text-wrap: pretty;
+  }
+  .qualifier { font-size: 15.5px; color: var(--muted); margin: 0; max-width: 38rem; }
+
+  .eyebrow {
+    font-family: var(--sans); font-weight: 500; font-size: 13px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--eyebrow);
+    margin: 0 0 26px;
+  }
+  .item-title {
+    font-family: var(--serif); font-weight: 600; font-size: 24px;
+    line-height: 1.25; color: var(--ink); margin: 0 0 12px;
+  }
+  .copy { margin: 0 0 14px; max-width: 38rem; text-wrap: pretty; }
+
+  .verified {
+    display: inline-block; font-size: 13.5px; letter-spacing: 0.04em;
+    color: var(--eyebrow); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 6px 10px; margin: 4px 0 18px; background: #F5F3EC;
+  }
+  .verified strong { color: var(--ink); font-weight: 500; }
+
+  .spec-list { margin: 0 0 20px; padding: 0; list-style: none; max-width: 38rem; }
+  .spec-list li { padding: 7px 0; border-bottom: 1px solid var(--rule); font-size: 15.5px; }
+  .spec-list li:last-child { border-bottom: 0; }
+
+  .btn {
+    display: inline-block; background: var(--ink); color: var(--paper);
+    font-family: var(--sans); font-weight: 500; font-size: 16px;
+    text-decoration: none; padding: 12px 22px; border-radius: 3px;
+  }
+  .btn:hover { background: var(--accent); color: var(--paper); }
+  .cta-row { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 22px; margin-top: 6px; }
+  .cta-alt { font-size: 15px; color: var(--muted); }
+
+  .site-foot { border-top: 1px solid var(--rule); }
+  .foot-inner {
+    max-width: 960px; margin: 0 auto; padding: 28px 24px 40px;
+    display: flex; flex-wrap: wrap; justify-content: space-between;
+    gap: 14px 32px; font-size: 13.5px; line-height: 1.7; color: #5E5645;
+  }
+  .foot-inner a { color: #5E5645; }
+  .foot-inner a:hover { color: var(--ink); }
+  .foot-links { display: flex; flex-wrap: wrap; gap: 6px 22px; }
+
+  @media (max-width: 480px) {
+    .nav { padding: 14px 20px; }
+    .wrap { padding: 0 20px; }
+    .band { padding: 44px 0 48px; }
+  }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-head">
+  <nav class="nav">
+    <a href="/" class="wordmark">SMB Solved</a>
+    <div class="nav-links">
+      <a href="/#services">Services</a>
+      <a href="/#steda">Steda</a>
+      <a href="/#contact">Contact</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+
+  <section class="band">
+    <div class="wrap">
+      <h1>Excel templates built for real closes.</h1>
+      <p class="lede">Fixed asset schedules and close workpapers, built the way we build them for clients: tie-out rows that catch drift, inputs separated from formulas, and a written record of the checks each file passed before it went up.</p>
+      <p class="qualifier">No macros, nothing hidden. Excel 2016 and later.</p>
+    </div>
+  </section>
+
+  <section class="band band--ruled">
+    <div class="wrap">
+      <h2 class="eyebrow">The shelf</h2>
+
+      <h3 class="item-title">Fixed asset register &amp; roll-forward</h3>
+      <span class="verified"><strong>Verified:</strong> 41 of 41 formula checks agree, Excel 16.0 · 2026</span>
+      <ul class="spec-list">
+        <li>Book depreciation, straight line with a full-month convention</li>
+        <li>Tax depreciation, MACRS half-year, with a bonus column</li>
+        <li>Disposals with automatic gain or loss</li>
+        <li>Cost and accumulated depreciation roll-forwards with tie-out rows</li>
+        <li>A tie-to-GL block: paste your balances, it shows the variance or says OK</li>
+      </ul>
+      <p class="copy">The tie-out rows are the point. When something doesn't add up, the sheet tells you by exactly how much, instead of letting a wrong total ride into the reporting package.</p>
+      <div class="cta-row">
+        <a class="btn" href="https://smbsolved.kit.com/9df3dd7dc4">Get the template by email</a>
+        <span class="cta-alt">Comes with The Tie-Out, a short letter every two weeks. One click unsubscribes.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band--ruled">
+    <div class="wrap">
+      <h2 class="eyebrow">If something doesn't tie</h2>
+      <p class="copy">Email <a href="mailto:hello@smbsolved.com">hello@smbsolved.com</a> and it gets fixed and credited. More templates land here as they're ready; the letter announces each one.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="foot-inner">
+    <div class="foot-links">
+      <span>&copy; 2026 SMB Solved</span>
+      <a href="mailto:hello@smbsolved.com">hello@smbsolved.com</a>
+      <a href="https://www.linkedin.com/company/smbsolved" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+    <div>Steda is an SMB Solved product.</div>
+  </div>
+</footer>
+
+</body>
+</html>

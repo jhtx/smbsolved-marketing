@@ -1,0 +1,9 @@
+node_modules/
+out/
+public/audio/*.mp3
+content/reels/*.timing.json
+.env
+.env.local
+.env.*.local
+setup.txt
+.DS_Store

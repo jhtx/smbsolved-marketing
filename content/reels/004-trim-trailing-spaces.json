@@ -1,0 +1,186 @@
+{
+  "id": "004",
+  "slug": "trim-trailing-spaces",
+  "title": "Two vendor names look identical but Excel won't match them",
+  "hook": {
+    "lead": "FALSE",
+    "body": "the two names\nare identical"
+  },
+  "payoff": {
+    "headline": "One space\nyou can't see\nkills the match",
+    "sub": "Wrap the exported value in TRIM before you compare it or look it up."
+  },
+  "sheet": {
+    "rows": [
+      {
+        "n": 1,
+        "a": "Vendor (AP export)",
+        "b": "Match",
+        "hdr": true,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 2,
+        "a": "Northwind Logistics ",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 3,
+        "a": "Cascade Freight ",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 4,
+        "a": "Beltline Supply Co ",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 5,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "none"
+      },
+      {
+        "n": 6,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "none"
+      },
+      {
+        "n": 7,
+        "a": "Vendor Master",
+        "b": "Terms",
+        "hdr": true,
+        "right": false,
+        "group": "bottom"
+      },
+      {
+        "n": 8,
+        "a": "Northwind Logistics",
+        "b": "Net 30",
+        "hdr": false,
+        "right": false,
+        "group": "bottom"
+      },
+      {
+        "n": 9,
+        "a": "Cascade Freight",
+        "b": "Net 45",
+        "hdr": false,
+        "right": false,
+        "group": "bottom"
+      },
+      {
+        "n": 10,
+        "a": "Beltline Supply Co",
+        "b": "Net 15",
+        "hdr": false,
+        "right": false,
+        "group": "bottom"
+      }
+    ],
+    "target": "B2",
+    "fillDown": {
+      "3": "TRUE",
+      "4": "TRUE"
+    }
+  },
+  "formulas": {
+    "before": {
+      "cell": "B2",
+      "text": "=A2=A8",
+      "expected": "FALSE",
+      "isError": false
+    },
+    "after": {
+      "cell": "B2",
+      "text": "=TRIM(A2)=A8",
+      "expected": "TRUE",
+      "isError": false
+    }
+  },
+  "script": [
+    {
+      "vo": "Two vendor names read exactly the same, and Excel tells you they're different.",
+      "cue": "hook"
+    },
+    {
+      "vo": "Vendor names off the AP aging export.",
+      "caption": "Vendor names off the\nAP aging export.",
+      "cue": "revealTop"
+    },
+    {
+      "vo": "The vendor master sits right underneath, with terms on it.",
+      "caption": "The master list is\nright underneath.",
+      "cue": "revealBottom"
+    },
+    {
+      "vo": "Simplest test there is. Top name against the master name.",
+      "caption": "Straight comparison.\nTop name against master.",
+      "cue": "typeFormula"
+    },
+    {
+      "vo": "Excel says no.",
+      "caption": "Excel says no.",
+      "cue": "showError"
+    },
+    {
+      "vo": "Both cells read Northwind Logistics. Nothing is misspelled. The export just left a space hanging off the end of the first one, and that space counts as a character.",
+      "caption": "There's a space\nhanging off the end.",
+      "cue": "markError"
+    },
+    {
+      "vo": "So wrap the exported value in TRIM. It clears spaces off both ends and collapses any doubles in the middle.",
+      "caption": "Wrap it in *TRIM*.",
+      "cue": "typeFix"
+    },
+    {
+      "vo": "TRUE. Same name, matching now.",
+      "caption": "TRUE. It matches.",
+      "cue": "showResult"
+    },
+    {
+      "vo": "One caveat. TRIM only handles the regular space. Data pasted out of a browser or a PDF often carries a non breaking space, and TRIM leaves that one sitting there.",
+      "caption": "TRIM misses non breaking\nspaces from web pastes."
+    },
+    {
+      "vo": "Fill it down and the rest of the vendors tie out.",
+      "caption": "Fill down. All match.",
+      "cue": "fillDown"
+    },
+    {
+      "vo": "A space you can't see still counts. Trim it before you compare anything.",
+      "cue": "payoff"
+    }
+  ],
+  "post": {
+    "title": "Two vendor names look identical but Excel says they don't match",
+    "description": "excel says two identical text values don't match\nAP exports often carry a trailing space on the vendor name, so the comparison comes back FALSE. Wrap the exported value in TRIM and it matches. Save this for close.",
+    "hashtags": [
+      "excel",
+      "accounting",
+      "exceltips",
+      "accountspayable",
+      "bookkeeping"
+    ]
+  },
+  "verification": {
+    "excel": "16.0.20326",
+    "on": "2026-08-23",
+    "formulasHash": "8648f8a364e0baa7"
+  }
+}

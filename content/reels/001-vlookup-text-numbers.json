@@ -1,0 +1,172 @@
+{
+  "id": "001",
+  "slug": "vlookup-text-numbers",
+  "title": "VLOOKUP returns #N/A when account codes come across as text",
+  "hook": {
+    "lead": "#N/A",
+    "body": "but the value\nis right there"
+  },
+  "payoff": {
+    "headline": "Left-aligned\nnumbers\nare text",
+    "sub": "Multiply the lookup value by 1, or wrap it in VALUE()."
+  },
+  "sheet": {
+    "target": "B2",
+    "rows": [
+      {
+        "n": 1,
+        "a": "Acct",
+        "b": "Account Name",
+        "hdr": true
+      },
+      {
+        "n": 2,
+        "a": "1042",
+        "b": ""
+      },
+      {
+        "n": 3,
+        "a": "1055",
+        "b": ""
+      },
+      {
+        "n": 4,
+        "a": "1120",
+        "b": ""
+      },
+      {
+        "n": 5,
+        "a": "",
+        "b": "",
+        "group": "none"
+      },
+      {
+        "n": 6,
+        "a": "",
+        "b": "",
+        "group": "none"
+      },
+      {
+        "n": 7,
+        "a": "Code",
+        "b": "Description",
+        "hdr": true,
+        "group": "bottom"
+      },
+      {
+        "n": 8,
+        "a": "1042",
+        "b": "Cash - Operating",
+        "right": true,
+        "group": "bottom"
+      },
+      {
+        "n": 9,
+        "a": "1055",
+        "b": "Cash - Payroll",
+        "right": true,
+        "group": "bottom"
+      },
+      {
+        "n": 10,
+        "a": "1120",
+        "b": "Accounts Receivable",
+        "right": true,
+        "group": "bottom"
+      }
+    ],
+    "fillDown": {
+      "3": "Cash - Payroll",
+      "4": "Accounts Receivable"
+    },
+    "alignment": {
+      "textCell": "A2",
+      "numberCell": "A8"
+    }
+  },
+  "formulas": {
+    "before": {
+      "cell": "B2",
+      "text": "=VLOOKUP(A2,$A$8:$B$10,2,FALSE)",
+      "expected": "#N/A",
+      "isError": true
+    },
+    "after": {
+      "cell": "B2",
+      "text": "=VLOOKUP(A2*1,$A$8:$B$10,2,FALSE)",
+      "expected": "Cash - Operating",
+      "isError": false
+    }
+  },
+  "script": [
+    {
+      "vo": "Your VLOOKUP says #N/A, but the value is right there.",
+      "cue": "hook"
+    },
+    {
+      "vo": "Account codes straight out of the GL export.",
+      "caption": "Account codes straight\nout of the GL export.",
+      "cue": "revealTop"
+    },
+    {
+      "vo": "Chart of accounts sitting right below it.",
+      "caption": "Chart of accounts\nsitting right below.",
+      "cue": "revealBottom"
+    },
+    {
+      "vo": "It's a standard VLOOKUP. Exact match. Nothing fancy.",
+      "caption": "Standard VLOOKUP.\nExact match.",
+      "cue": "typeFormula"
+    },
+    {
+      "vo": "And it fails.",
+      "caption": "And it fails.",
+      "cue": "showError"
+    },
+    {
+      "vo": "Nothing's misspelled. Nothing's missing.",
+      "caption": "Nothing misspelled.\nNothing missing.",
+      "cue": "markError"
+    },
+    {
+      "vo": "Look at where the numbers sit in the cell. If they hug the left, they're text. If they hug the right, they're real numbers.",
+      "caption": "Left means text.\nRight means numbers.",
+      "cue": "showAlignment"
+    },
+    {
+      "vo": "Excel won't match text against a number. So multiply the lookup value by one.",
+      "caption": "So multiply the\nlookup value by *1*.",
+      "cue": "typeFix"
+    },
+    {
+      "vo": "That flips it to a number, and now it matches.",
+      "caption": "Now it's a number.\nNow it matches.",
+      "cue": "showResult"
+    },
+    {
+      "vo": "Fill it down, and the whole column comes back.",
+      "caption": "Fill it down.\nAll matched.",
+      "cue": "fillDown"
+    },
+    {
+      "vo": "Left aligned numbers are text. Every time.",
+      "cue": "payoff"
+    }
+  ],
+  "verification": {
+    "excel": "16.0.20326",
+    "on": "2026-08-23",
+    "formulasHash": "f48d8cbb8dde9a36"
+  },
+  "post": {
+    "title": "VLOOKUP says #N/A but the value is right there",
+    "description": "vlookup returns #N/A even though the value exists\nAccount codes from a GL export often come in as text. Multiply the lookup value by 1 and the match comes back. Save this for close.",
+    "hashtags": [
+      "excel",
+      "accounting",
+      "exceltips",
+      "vlookup",
+      "bookkeeping"
+    ]
+  }
+}

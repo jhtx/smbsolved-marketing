@@ -1,0 +1,42 @@
+{
+  "name": "smbsolved-reels",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio",
+    "run": "tsx pipeline/run.ts",
+    "mine": "tsx pipeline/mine.ts",
+    "script": "tsx pipeline/script.ts",
+    "review": "tsx pipeline/review.ts",
+    "build": "tsx pipeline/build.ts",
+    "verify": "tsx pipeline/verify.ts",
+    "excel": "tsx pipeline/excel.ts",
+    "voice": "tsx pipeline/voice.ts",
+    "render": "tsx pipeline/render.ts",
+    "deliver": "tsx pipeline/deliver.ts",
+    "template:far": "tsx pipeline/template-far.ts",
+    "kit:setup": "tsx pipeline/kit-setup.ts",
+    "newsletter": "tsx pipeline/newsletter.ts",
+    "site:publish": "tsx pipeline/github.ts",
+    "ig": "tsx pipeline/instagram.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
+    "@remotion/bundler": "^4.0.0",
+    "@remotion/cli": "^4.0.0",
+    "@remotion/fonts": "^4.0.515",
+    "@remotion/renderer": "^4.0.0",
+    "@slack/web-api": "^8.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}

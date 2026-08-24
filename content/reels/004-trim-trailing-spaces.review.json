@@ -1,0 +1,82 @@
+{
+  "verdict": "pass",
+  "findings": [
+    {
+      "severity": "minor",
+      "where": "script line with cue \"typeFix\"",
+      "issue": "The fix is named in the same line that triggers the typing, so the words and the formula land together rather than the explanation arriving first. House rule wants the plain-words fix said before the formula shows.",
+      "fix": "Move \"So wrap the exported value in TRIM\" to the end of the markError line and leave the typeFix line as the mechanics (\"It clears spaces off both ends and collapses doubles in the middle\")."
+    },
+    {
+      "severity": "minor",
+      "where": "non-breaking space caveat line (no cue)",
+      "issue": "Three sentences, its own caption, no cue, and it raises a problem it does not solve. It reads like a second mini-lesson bolted on and it will sit on screen without an animation beat.",
+      "fix": "Cut to one clause, e.g. \"TRIM only clears normal spaces, not the non-breaking ones you get from web pastes.\" Consider dropping the caption and letting it ride on the fillDown beat."
+    },
+    {
+      "severity": "minor",
+      "where": "caption \"TRIM misses non breaking\\nspaces from web pastes.\"",
+      "issue": "\"non breaking\" unhyphenated looks like a typo on screen. Hyphens are fine; only em/en dashes are banned.",
+      "fix": "Write \"non-breaking\" in the caption. Leave the VO text as is if the lexicon needs it."
+    },
+    {
+      "severity": "minor",
+      "where": "payoff.headline",
+      "issue": "Three lines (\"One space / you can't see / kills the match\"). Caption rule is two lines max; previous payoffs were tighter one-liners.",
+      "fix": "Tighten to two lines, e.g. \"One invisible space\\nkills the match\"."
+    },
+    {
+      "severity": "minor",
+      "where": "sheet rows 2-4 / vendor names",
+      "issue": "\"Northwind\" is Microsoft's own sample-data vendor name. Not wrong, but an accountant who has seen a Microsoft demo will clock it as fake.",
+      "fix": "Swap for something plainer off a real AP aging, e.g. \"Halvorsen Trucking\" or \"Midstate Pallet\"."
+    },
+    {
+      "severity": "minor",
+      "where": "topic vs reels 001 and 002",
+      "issue": "Third reel in a row on the same underlying family: exported text that looks right but doesn't behave. Narration and mechanism differ enough, so not blocking, but the well is getting shallow.",
+      "fix": "Nothing to change here. Pull the next topic from a different failure family (aggregation, date rollups, merged cells from a system export)."
+    }
+  ],
+  "hook": {
+    "score": 4,
+    "note": "\"FALSE / the two names are identical\" is a real 9pm symptom, short, and shows the actual cell result rather than a category. Not a 5 only because the body is a flat statement; \"these names are identical\" or naming the vendor match context would sting slightly more."
+  },
+  "claims": [
+    {
+      "claim": "=A2=A8 returns FALSE when A2 has a trailing space",
+      "verdict": "true",
+      "note": "Trailing space is a character; the comparison is not whitespace-tolerant. Excel confirmed FALSE."
+    },
+    {
+      "claim": "TRIM clears spaces off both ends and collapses doubles in the middle",
+      "verdict": "true",
+      "note": "Accurate description of TRIM: removes leading/trailing spaces, reduces internal runs to one."
+    },
+    {
+      "claim": "TRIM only handles the regular space and leaves non-breaking spaces behind",
+      "verdict": "true",
+      "note": "TRIM targets CHAR(32); CHAR(160) from web/PDF pastes survives. Needs SUBSTITUTE, not mentioned, which is fine as a caveat."
+    },
+    {
+      "claim": "\"that space counts as a character\"",
+      "verdict": "true",
+      "note": "Correct and plainly put."
+    },
+    {
+      "claim": "Both cells read the same name with nothing misspelled",
+      "verdict": "true",
+      "note": "Consistent with the sheet data; only difference is the trailing space."
+    },
+    {
+      "claim": "TRIM needs no version caveat",
+      "verdict": "true",
+      "note": "TRIM exists in every supported Excel version, including 2016/2019 and Excel for Mac. No #NAME? risk."
+    },
+    {
+      "claim": "Fill down makes rows 3 and 4 return TRUE",
+      "verdict": "true",
+      "note": "Rows 3 and 4 also carry trailing spaces, so TRIM(A3)=A9 and TRIM(A4)=A10 both resolve TRUE, matching fillDown."
+    }
+  ]
+}

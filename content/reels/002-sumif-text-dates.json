@@ -1,0 +1,168 @@
+{
+  "id": "002",
+  "slug": "sumif-text-dates",
+  "title": "SUMIFS over a date range returns 0 because the imported dates are text",
+  "hook": {
+    "lead": "0.00",
+    "body": "March totals zero.\nThe GL says otherwise."
+  },
+  "payoff": {
+    "headline": "Text dates don't\nerror. They zero out.",
+    "sub": "DATEVALUE reads text in your regional date format."
+  },
+  "sheet": {
+    "rows": [
+      {
+        "n": 1,
+        "a": "Post Date",
+        "b": "Amount",
+        "hdr": true,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 2,
+        "a": "03/04/2026",
+        "b": "1240.50",
+        "hdr": false,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 3,
+        "a": "03/18/2026",
+        "b": "862.75",
+        "hdr": false,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 4,
+        "a": "04/02/2026",
+        "b": "2310.00",
+        "hdr": false,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 5,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "none"
+      },
+      {
+        "n": 6,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "none"
+      },
+      {
+        "n": 7,
+        "a": "Period",
+        "b": "Total",
+        "hdr": true,
+        "right": false,
+        "group": "bottom"
+      },
+      {
+        "n": 8,
+        "a": "March 2026",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "bottom"
+      }
+    ],
+    "target": "B8",
+    "fillDown": {}
+  },
+  "formulas": {
+    "before": {
+      "cell": "B8",
+      "text": "=SUMIFS($B$2:$B$4,$A$2:$A$4,\">=\"&DATE(2026,3,1),$A$2:$A$4,\"<\"&DATE(2026,4,1))",
+      "expected": "0.00",
+      "isError": false,
+      "numberFormat": "#,##0.00"
+    },
+    "after": {
+      "cell": "B8",
+      "text": "=SUMPRODUCT((DATEVALUE($A$2:$A$4)>=DATE(2026,3,1))*(DATEVALUE($A$2:$A$4)<DATE(2026,4,1))*$B$2:$B$4)",
+      "expected": "2,103.25",
+      "isError": false,
+      "numberFormat": "#,##0.00"
+    }
+  },
+  "script": [
+    {
+      "vo": "It's close night, March totals zero, and the GL says otherwise.",
+      "cue": "hook"
+    },
+    {
+      "vo": "Three journal lines straight out of the GL export.",
+      "caption": "Three lines from the\nGL export.",
+      "cue": "revealTop"
+    },
+    {
+      "vo": "And underneath, the March total.",
+      "caption": "The March total,\nright underneath.",
+      "cue": "revealBottom"
+    },
+    {
+      "vo": "SUMIFS over the amounts, March first through the end of the month.",
+      "caption": "SUMIFS across the\nMarch date range.",
+      "cue": "typeFormula"
+    },
+    {
+      "vo": "Zero.",
+      "caption": "Zero.",
+      "cue": "showError"
+    },
+    {
+      "vo": "The range is right. The criteria are right.",
+      "caption": "Range is right.\nCriteria are right.",
+      "cue": "markError"
+    },
+    {
+      "vo": "Those dates came in as text. SUMIFS is comparing them to a real date, and a text date never counts, so nothing gets added up.",
+      "caption": "Date tests skip\ntext dates."
+    },
+    {
+      "vo": "So convert them to real dates first. That's DATEVALUE. Just know it reads them in your regional date format.",
+      "caption": "Convert them first\nwith *DATEVALUE*."
+    },
+    {
+      "vo": "SUMIFS won't take a converted range, so SUMPRODUCT runs the same two checks.",
+      "caption": "Same checks, inside\nSUMPRODUCT.",
+      "cue": "typeFix"
+    },
+    {
+      "vo": "There it is. March ties out.",
+      "caption": "March ties out.",
+      "cue": "showResult"
+    },
+    {
+      "vo": "Text dates don't fail loudly. They just total to zero.",
+      "cue": "payoff"
+    }
+  ],
+  "post": {
+    "title": "SUMIFS returns 0 when imported dates are stored as text",
+    "description": "sumifs date range returns 0 excel\nDates that come in as text won't match a date test. Convert them with DATEVALUE and the total comes back. Save this for close.",
+    "hashtags": [
+      "excel",
+      "accounting",
+      "exceltips",
+      "bookkeeping",
+      "monthendclose"
+    ]
+  },
+  "verification": {
+    "excel": "16.0.20326",
+    "on": "2026-08-23",
+    "formulasHash": "d1a43469d1e8091c"
+  }
+}
