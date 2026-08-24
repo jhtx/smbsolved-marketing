@@ -1,0 +1,188 @@
+{
+  "id": "005",
+  "slug": "vendor-lookup-char160",
+  "title": "Vendor names look identical but VLOOKUP still returns #N/A",
+  "hook": {
+    "lead": "#N/A",
+    "body": "and TRIM didn't\nfix it either"
+  },
+  "payoff": {
+    "headline": "TRIM WON'T\nTOUCH\nCHAR 160",
+    "sub": "Anything pasted out of a browser can carry a non-breaking space TRIM ignores."
+  },
+  "sheet": {
+    "rows": [
+      {
+        "n": 1,
+        "a": "Vendor",
+        "b": "Amount Due",
+        "hdr": true,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 2,
+        "a": "Cintas Corporation",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 3,
+        "a": "Grainger Industrial",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 4,
+        "a": "Iron Mountain",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "top"
+      },
+      {
+        "n": 5,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "none"
+      },
+      {
+        "n": 6,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "group": "none"
+      },
+      {
+        "n": 7,
+        "a": "Vendor Master",
+        "b": "Balance",
+        "hdr": true,
+        "right": false,
+        "group": "bottom"
+      },
+      {
+        "n": 8,
+        "a": "Cintas Corporation",
+        "b": "4,812.00",
+        "hdr": false,
+        "right": false,
+        "group": "bottom"
+      },
+      {
+        "n": 9,
+        "a": "Grainger Industrial",
+        "b": "1,296.40",
+        "hdr": false,
+        "right": false,
+        "group": "bottom"
+      },
+      {
+        "n": 10,
+        "a": "Iron Mountain",
+        "b": "2,375.15",
+        "hdr": false,
+        "right": false,
+        "group": "bottom"
+      }
+    ],
+    "target": "B2",
+    "fillDown": {
+      "3": "1,296.40",
+      "4": "2,375.15"
+    }
+  },
+  "formulas": {
+    "before": {
+      "cell": "B2",
+      "text": "=VLOOKUP(A2,$A$8:$B$10,2,FALSE)",
+      "expected": "#N/A",
+      "isError": true,
+      "numberFormat": "#,##0.00"
+    },
+    "after": {
+      "cell": "B2",
+      "text": "=VLOOKUP(SUBSTITUTE(A2,CHAR(160),\" \"),$A$8:$B$10,2,FALSE)",
+      "expected": "4,812.00",
+      "isError": false,
+      "numberFormat": "#,##0.00"
+    }
+  },
+  "script": [
+    {
+      "vo": "You pasted the vendor list out of the AP portal, the names match the master, and the lookup still says #N/A.",
+      "cue": "hook"
+    },
+    {
+      "vo": "Vendor names copied down from the portal.",
+      "caption": "Vendor names from\nthe AP portal.",
+      "cue": "revealTop"
+    },
+    {
+      "vo": "Our vendor master with the open balances.",
+      "caption": "The master holds\nthe balances.",
+      "cue": "revealBottom"
+    },
+    {
+      "vo": "Exact match VLOOKUP into the master.",
+      "caption": "Exact match VLOOKUP.",
+      "cue": "typeFormula"
+    },
+    {
+      "vo": "#N/A on the first one.",
+      "caption": "#N/A on the first one.",
+      "cue": "showError"
+    },
+    {
+      "vo": "You already ran TRIM on this one. Nothing changed.",
+      "caption": "TRIM does nothing\nto this one.",
+      "cue": "markError"
+    },
+    {
+      "vo": "That gap isn't a normal space. The pasted side carries character 160, a non-breaking space TRIM won't clear. So you swap it for a real space first.",
+      "caption": "That gap is\n*character 160*."
+    },
+    {
+      "vo": "The master's typed by hand, so wrap the lookup value in SUBSTITUTE. The name comes out clean.",
+      "caption": "SUBSTITUTE it for\na real space.",
+      "cue": "typeFix"
+    },
+    {
+      "vo": "Balance comes back. 4,812.00.",
+      "caption": "Balance comes back.",
+      "cue": "showResult"
+    },
+    {
+      "vo": "Fill it down and the balances tie out.",
+      "caption": "Fill down. It ties out.",
+      "cue": "fillDown"
+    },
+    {
+      "vo": "Anything you paste out of a browser can carry character 160, and TRIM won't touch it.",
+      "cue": "payoff"
+    }
+  ],
+  "post": {
+    "title": "Vendor names match but VLOOKUP still returns #N/A",
+    "description": "vlookup na error even though vendor names match and trim doesn't help\nNames copied out of a web portal carry a non-breaking space, character 160, which TRIM leaves alone. Swap it out with SUBSTITUTE and the match comes back. Save this one for close.",
+    "hashtags": [
+      "excel",
+      "accounting",
+      "exceltips",
+      "vlookup",
+      "accountspayable"
+    ]
+  },
+  "verification": {
+    "excel": "16.0.20326",
+    "on": "2026-08-24",
+    "formulasHash": "0396c546b0158346"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "verdict": "pass",
+  "findings": [
+    {
+      "severity": "minor",
+      "where": "script line 7 (no cue) — \"That gap isn't a normal space...\"",
+      "issue": "Longest line in the reel at ~40 words and it sits on the markError frame with no cue of its own. Total narration is roughly 140 words, which lands near or past the 55s ceiling once pauses are added.",
+      "fix": "Cut the explanation to two short sentences (drop \"So you swap it for a real space first\" since the next line already says SUBSTITUTE) to keep the runtime inside the band."
+    },
+    {
+      "severity": "minor",
+      "where": "hook / overall topic vs reel 004",
+      "issue": "This is the third reel in a row where an invisible character breaks a text match (001 text numbers, 004 trailing spaces, now CHAR 160), and the second hook built on #N/A. The TRIM-already-failed angle does differentiate it, but the channel is starting to read as one idea with different nouns.",
+      "fix": "Keep this one, but push the next two reels off invisible-character/text-match territory entirely (GL export with merged rows, dates as serials, SUMIFS criteria mismatch, etc.)."
+    },
+    {
+      "severity": "minor",
+      "where": "payoff.headline \"TRIM WON'T\\nTOUCH\\nCHAR 160\"",
+      "issue": "Three lines where the house rule for on-screen text is two. Risk of overflow or a different look from prior payoffs.",
+      "fix": "Two lines, e.g. \"TRIM WON'T TOUCH\\nCHAR 160\"."
+    },
+    {
+      "severity": "minor",
+      "where": "script line 10 — \"Fill it down and the aging ties out.\"",
+      "issue": "The bottom table is a vendor master with open balances, not an aging schedule. Small mismatch an AP person would notice.",
+      "fix": "\"Fill it down and the balances tie out.\""
+    },
+    {
+      "severity": "minor",
+      "where": "formulas.after / narration",
+      "issue": "Portal pastes often carry CHAR(160) *and* ordinary trailing spaces, so SUBSTITUTE alone can still miss in the wild. Not a false claim as written, but a viewer may hit it.",
+      "fix": "Optional half-clause in the fix line: \"wrap it in SUBSTITUTE, and keep TRIM around it if the paste is messy.\" Only if it fits the runtime."
+    }
+  ],
+  "hook": {
+    "score": 4,
+    "note": "\"#N/A and TRIM didn't fix it either\" is a real 9pm symptom, seven words, and the TRIM clause is the specific thing that separates it from the generic #N/A reel. Loses a point only because it's the second #N/A lead on the channel."
+  },
+  "claims": [
+    {
+      "claim": "TRIM does not remove CHAR(160)",
+      "verdict": "true",
+      "note": "TRIM only strips ASCII 32; the non-breaking space survives."
+    },
+    {
+      "claim": "Text pasted out of a browser or web portal can carry a non-breaking space",
+      "verdict": "true",
+      "note": "Standard HTML &nbsp; behaviour, and the line is hedged with \"can\"."
+    },
+    {
+      "claim": "SUBSTITUTE(A2,CHAR(160),\" \") replaces the non-breaking space with a real space so exact-match VLOOKUP matches",
+      "verdict": "true",
+      "note": "Correct, given the master value is typed with a normal space."
+    },
+    {
+      "claim": "VLOOKUP with FALSE is an exact match",
+      "verdict": "true",
+      "note": "Caption \"Exact match VLOOKUP\" is accurate."
+    },
+    {
+      "claim": "No version caveat needed",
+      "verdict": "true",
+      "note": "VLOOKUP, SUBSTITUTE and CHAR all exist in 2016/2019; nothing here returns #NAME? on a locked-down install."
+    },
+    {
+      "claim": "Data realism",
+      "verdict": "true",
+      "note": "Cintas, Grainger, Iron Mountain with 4,812.00 / 1,296.40 / 2,375.15 reads like a real AP extract."
+    }
+  ]
+}

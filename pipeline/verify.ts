@@ -125,6 +125,39 @@ export function verify(raw: unknown, opts: { structureOnly?: boolean } = {}): Ve
       f.push({ level: 'warn', message: `${where}: semicolon in a caption reads like a machine wrote it` });
   }
 
+  // --- control characters ---------------------------------------------------
+  // A writer that fumbles a JSON escape plants garbage where an invisible
+  // character was meant (reel 005: a backspace escape where U+00A0 was
+  // intended). Nothing below U+0020 is ever legitimate content; a newline is
+  // a line break in captions/overlays only. NBSP (U+00A0) is data, allowed.
+  {
+    const control = (s: string, allowNewline: boolean) =>
+      [...s].find((c) => {
+        const cp = c.codePointAt(0) ?? 0;
+        return (cp < 0x20 && !(allowNewline && c === '\n')) || cp === 0x7f;
+      });
+    const name = (c: string) => `U+${(c.codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, '0')}`;
+    for (const r of reel.sheet.rows)
+      for (const col of ['a', 'b'] as const) {
+        const bad = control(r[col], false);
+        if (bad !== undefined)
+          f.push({
+            level: 'error',
+            message: `sheet row ${r.n} column ${col.toUpperCase()}: control character ${name(bad)} in the cell text. If an invisible space was meant, use a real non-breaking space (JSON \\u00a0).`,
+          });
+      }
+    for (const key of ['before', 'after'] as const) {
+      const bad = control(reel.formulas[key].text, false);
+      if (bad !== undefined)
+        f.push({ level: 'error', message: `formulas.${key}.text: control character ${name(bad)} in the formula` });
+    }
+    for (const [where, text] of facing) {
+      const bad = control(text, true);
+      if (bad !== undefined)
+        f.push({ level: 'error', message: `${where}: control character ${name(bad)}` });
+    }
+  }
+
   // --- column fit (widths auto-size, but A and B compete for one card) ------
   {
     const aMax = Math.max(...reel.sheet.rows.map((r) => r.a.length), 0);

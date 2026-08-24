@@ -45,6 +45,11 @@ losing time to something specific. Assume they know what VLOOKUP is.
     the formula to match. If the VO reads an amount, read it the way it is
     shown — no "dollars" unless a currency symbol is on screen.
 
+12. **Invisible characters are JSON unicode escapes.** If the data needs a
+    non-breaking space (CHAR 160), write it as `\u00a0` inside the string:
+    `"Cintas\u00a0Corporation"`. Nothing else. `\b`, `\f`, `\t` are control
+    characters, not invisible spaces, and the gate rejects them.
+
 ## The hook
 
 The first line is the whole reel. It must name a moment the viewer has

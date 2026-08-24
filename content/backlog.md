@@ -21,7 +21,7 @@ Target three to four a week. Keep this list ten deep or the pipeline starves.
       fine → dates imported as text, DATEVALUE
 - [x] **004** Two account names look identical but won't match → trailing
       space from the export, TRIM
-- [ ] **005** Vendor names match but the lookup still fails → non-breaking
+- [x] **005** Vendor names match but the lookup still fails → non-breaking
       space (CHAR 160) from a web export, SUBSTITUTE
 - [ ] **006** VLOOKUP breaks every time someone inserts a column →
       column index is positional, use XLOOKUP or MATCH

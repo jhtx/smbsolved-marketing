@@ -340,3 +340,17 @@ Instagram's own 2026 data on business accounts puts 45–60s ahead of <30s on
 reach, engagement and median views; Shorts completion favours 30–60s; no
 platform has a cliff before 90s. The beat sequence dictates length; never pad,
 never rush a formula to fit a number. `verify` warns outside 25–60s.
+
+## 2026-08-24 — The gate rejects control characters (from the reel 005 park)
+The writer needed a non-breaking space inside vendor names (the CHAR 160
+lesson) and wrote `\by` — the JSON backspace escape plus a stray letter — on
+all three attempts. Excel then truthfully returned #N/A for the "fixed"
+formula, the writer conformed `expected` to the error (as instructed: never
+argue with Excel), and the reviewer blocked the narration/result
+contradiction. Right park, wrong layer: the failure was detectable at
+structure time. verify.ts now errors on any codepoint below U+0020 (plus
+U+007F) in sheet cells, formula text, and facing text (`\n` allowed where
+line breaks are legal); the writer prompt (rule 12) says how to encode an
+invisible space (`\u00a0`). NBSP itself stays allowed — it is the lesson.
+Probed in real Excel before fixing: with a genuine NBSP this reel's fix
+returns 4,812.00 and both fill-downs match.
