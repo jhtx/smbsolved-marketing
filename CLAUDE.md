@@ -62,11 +62,15 @@ Pipeline order (`run.ts` chains them for one scheduled run):
                  hook, variety — never the formula result                  (judgment)
 4. `voice.ts`    ElevenLabs with-timestamps, writes mp3 + alignment        (deterministic)
 5. `render.ts`   Remotion renders MP4 + two LinkedIn stills, in-process    (deterministic)
-6. `deliver.ts`  OneDrive-synced archive + Slack post with ✅ approval      (deterministic)
+6. `deliver.ts`  OneDrive-synced archive + Slack post + delivery record    (deterministic)
+7. `poll.ts`     sees the ✅, posts to the platforms, replies in thread     (deterministic)
+
+Steps 1–6 are the scheduled daily run. Step 7 is its own task, every ten
+minutes, waiting on a human.
 
 Models are allowed in exactly two places: the **writer** (1) and the
 **reviewer** (3); both go through `llm.ts`, both return structured JSON
-against a zod schema. Steps 2, 4, 5, 6 stay model-free. If a deterministic
+against a zod schema. Steps 2, 4, 5, 6, 7 stay model-free. If a deterministic
 step feels like it needs judgment, the reel JSON is underspecified — fix the
 schema. `.env.local` holds the keys (`env.ts` loads it); never commit it.
 
@@ -191,6 +195,12 @@ Locked. Changing any of this breaks recognizability across the channel.
 ## Platform notes
 
 - One clean MP4 for every platform. No watermarks, no re-downloads.
+- **A ✅ on the Slack message means "post this for me", not "I posted it."**
+  `poll.ts` runs every ten minutes, sees the reaction, and posts. Nothing
+  posts without that reaction, and a platform that already went out is never
+  retried. TikTok is the exception and says so: until the app is audited its
+  API can only push a draft to the app inbox, so it reports `drafted` and the
+  last step stays manual. LinkedIn is held to the cadence below automatically.
 - Cadence (evidence in the strategy document): Instagram / TikTok / Shorts
   3–4 reels a week, the same reel everywhere, and one of them is the weekly
   `[general]` tip; LinkedIn 2 posts a week from the founder's profile — one
@@ -216,8 +226,6 @@ Locked. Changing any of this breaks recognizability across the channel.
 
 Each needs a reason in writing in `DECISIONS.md` before it starts:
 
-- auto-posting (order if it comes: YouTube → Instagram → LinkedIn → TikTok, or
-  a scheduler with an API). Until then: deliver to Slack/OneDrive, post by hand.
 - a web UI
 - a second content format (LinkedIn static before/after frames and lead-magnet
   templates are on the table; see the strategy document)

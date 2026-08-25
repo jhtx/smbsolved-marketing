@@ -20,7 +20,10 @@
     "newsletter": "tsx pipeline/newsletter.ts",
     "site:publish": "tsx pipeline/github.ts",
     "ig": "tsx pipeline/instagram.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "poll": "tsx pipeline/poll.ts",
+    "authorize": "tsx pipeline/post/authorize.ts",
+    "host": "tsx pipeline/post/host.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

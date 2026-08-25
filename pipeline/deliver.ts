@@ -5,9 +5,14 @@
  *      folder (zero API: the sync client does the upload). Holds the MP4,
  *      LinkedIn stills, reel JSON, review, voice + alignment, and post.txt.
  *   2. Slack — one message in #social-media with the post copy, the MP4 and
- *      stills attached in-thread. A ✅ reaction on that message means "posted".
+ *      stills attached in-thread. A ✅ reaction on that message means "post
+ *      this for me": poll.ts watches for it and does the posting.
+ *   3. A delivery record beside the reel (`NNN-slug.delivery.json`) holding
+ *      the Slack coordinates and what has gone out where. Without it the
+ *      poller cannot see the reel at all, which is what keeps reels delivered
+ *      before auto-posting existed from being posted twice.
  *
- * Nothing here posts to a platform. See DECISIONS.md (no auto-posting in v1).
+ * Nothing here posts to a platform either. Approval comes first, always.
  *
  *   npx tsx pipeline/deliver.ts content/reels/002-sumif-text-dates.json
  */
@@ -16,11 +21,21 @@ import { copyFileSync, createReadStream, existsSync, mkdirSync, readFileSync, wr
 import { basename, dirname, join } from 'node:path';
 import { WebClient } from '@slack/web-api';
 import { reelSchema, type Reel } from '../src/reel/schema';
+import { recordPath, writeRecord, type DeliveryRecord } from './delivery';
+import { automation } from './post';
 
 export type Delivered = {
   archiveDir?: string;
   slack?: { channel: string; ts: string; permalink?: string };
+  record?: DeliveryRecord;
 };
+
+const LABEL = {
+  youtube: 'YouTube Shorts',
+  instagram: 'Instagram Reels',
+  linkedin: 'LinkedIn (personal)',
+  tiktok: 'TikTok',
+} as const;
 
 const DEFAULT_ARCHIVE = 'D:\\OneDrive - SMB Solved\\SMB Solved\\Marketing\\Reels';
 
@@ -38,13 +53,15 @@ export function postCopy(reel: Reel): string {
     '',
     `_Verified in Excel ${v?.excel ?? '?'} on ${v?.on ?? '?'}_`,
     '',
-    '*Post checklist*',
-    '• Instagram Reels — paste description + tags; Advanced settings → turn OFF auto-captions (ours are burned in)',
-    '• TikTok — same text; web upload is fine',
-    `• YouTube Shorts — title: "${title}"; description = the text above`,
-    '• LinkedIn (personal) — upload the MP4 natively + the static frame as a second post ≥24h later; first line of the post = the search phrase',
+    '*React ✅ and I will post it:*',
+    ...automation().map((a) =>
+      a.ready
+        ? `• ${LABEL[a.platform]} — ${a.note}`
+        : `• ${LABEL[a.platform]} — *by hand* (${a.missing.join(', ')} not set)`,
+    ),
     '',
-    'React ✅ on this message when it is posted.',
+    'Posting by hand instead? Instagram: Advanced settings → turn OFF auto-captions, ours are burned in.',
+    `YouTube title: "${title}". LinkedIn: first line of the post is the search phrase, and the still goes up as a separate post 24h later.`,
   ].join('\n');
 }
 
@@ -83,6 +100,7 @@ export async function deliver(opts: {
   }
   const slack = new WebClient(token);
   const msg = await slack.chat.postMessage({ channel, text: copy, unfurl_links: false });
+  if (!msg.ts) throw new Error('Slack accepted the message but returned no timestamp, so nothing could approve it');
   const ts = msg.ts!;
   const uploads = [opts.mp4, ...(opts.stills ?? [])].filter((f) => existsSync(f));
   for (const f of uploads) {
@@ -102,6 +120,21 @@ export async function deliver(opts: {
   }
   out.slack = { channel, ts, permalink };
   console.log(`  Slack: posted to ${channel} (${uploads.length} files)${permalink ? ' ' + permalink : ''}`);
+
+  // --- 3. the delivery record the poller watches -------------------------------
+  // Written last, and only once Slack has a message to react to: a record
+  // without somewhere to approve it would sit pending forever.
+  out.record = {
+    stem,
+    reelPath: `content/reels/${stem}.json`,
+    mp4: opts.mp4,
+    stills: (opts.stills ?? []).filter(existsSync),
+    deliveredAt: new Date().toISOString(),
+    slack: out.slack,
+    posts: {},
+  };
+  writeRecord(out.record);
+  console.log(`  waiting on ✅ — ${recordPath(stem)}`);
   return out;
 }
 

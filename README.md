@@ -62,6 +62,22 @@ pages you; `run.ts` pings it after every run and `/fail` on failure.
 
 Around the daily loop:
 
+Once it is built and in Slack, a ✅ on that message posts it:
+
+```bash
+npm run poll                   # check for approvals and post now
+npm run poll -- --dry-run      # say what would happen, change nothing
+npm run authorize -- youtube   # one-time browser consent (also linkedin, tiktok)
+powershell -ExecutionPolicy Bypass -File scripts\register-poll-task.ps1   # every 10 min
+```
+
+Every platform is optional. Without its credentials the poller records
+"skipped, post by hand" and the Slack message says which variable is missing,
+so a half-configured setup is obvious rather than silent. TikTok's API cannot
+publish until the app is audited, so it pushes a draft to the app inbox and
+reports `drafted`, never `posted`. LinkedIn is held to two posts a week
+automatically.
+
 ```bash
 npm run mine                   # weekly: pull Excel-problem threads, append tagged
                                # candidates under "## Mined" in the backlog.

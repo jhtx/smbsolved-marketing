@@ -10,16 +10,19 @@ playbook artifact). Reasoning for every rule: `DECISIONS.md`.
 |---|---|---|
 | `smbsolved-reels` | Weekdays 06:30 | Next numbered backlog item → writer → real-Excel gate → reviewer → Jimmy's voice → render + LinkedIn stills → OneDrive archive + Slack post in #social-media |
 | `smbsolved-reels-mine` | Sundays 17:00 | Stack Exchange + Reddit RSS → model distills candidates → appended under "## Mined" in the backlog + Slack notice |
+| `smbsolved-reels-poll` | Every 10 min (register with `scripts\register-poll-task.ps1`) | Looks for a ✅ on a delivered reel and posts it: YouTube Shorts, Instagram Reels, LinkedIn (held to the cadence), TikTok draft. Replies in the reel's Slack thread with what went where |
 | `smbsolved-reels-newsletter` | Every other Monday 07:30 (register with `scripts\register-newsletter-task.ps1` if not yet) | Drafts The Tie-Out from the newest POSTED reels, Instagram permalinks filled, close note drafted for review → Kit draft broadcast + Slack |
 
-All three need the PC on (sleep is fine) and Jimmy logged in (lock screen is
+All four need the PC on (sleep is fine) and Jimmy logged in (lock screen is
 fine). A missed daily run pages via healthchecks → Slack.
 
 ## Jimmy's loop
 
-- **Daily (~3 min):** watch the reel in Slack, post it to IG/TikTok/Shorts
-  (and LinkedIn per cadence), react ✅. Description text is in the Slack
-  message.
+- **Daily (~1 min):** watch the reel in Slack. If it is good, react ✅ and
+  the poller posts it within ten minutes and replies in the thread with the
+  links. TikTok lands as a draft in the app: open it, paste the caption from
+  the Slack message, publish.
+  Anything not configured yet says so in the message and stays yours to post.
 - **Weekly (~5 min):** curate Sunday's mined candidates — number the keepers
   (`- [ ] **NNN** [tag] ...`, next free number, file order = queue, one
   `[general]` per three or so), delete the rest.
@@ -38,6 +41,9 @@ npm run newsletter               # draft an issue now
 npm run template:far             # rebuild + verify + publish the FA template
 npm run template:far -- --check <path>   # re-verify a hand-edited copy, then publish
 npm run ig                       # Instagram: who am I + latest media
+npm run poll                     # check for ✅ and post now, instead of waiting
+npm run poll -- --dry-run        # say what would happen, change nothing
+npm run authorize -- youtube     # one-time consent per platform (also linkedin, tiktok)
 npm run kit:setup                # idempotent Kit objects (tag/sequence/emails)
 npm run site:publish -- <local> <repoPath>  # push any file to smbsolved.com
 ```
@@ -69,14 +75,20 @@ says exactly which cells disagree.
   requests and skips 429s).
 - Kit's API on this plan cannot create sequences/sequence emails (UI did it);
   broadcasts work.
-- Instagram auto-posting is deliberately NOT built (decision open).
-- Reel 003 (hardcoded SUM range → Table) is parked until the schema learns
-  row/column-insert beats — the next engineering item.
+- TikTok cannot publish through its API until the app passes content-posting
+  audit, so the poller pushes a draft and says so. It never reports "posted".
+- LinkedIn's credential is a 60-day access token, not a refresh token. The
+  poller warns in Slack a week out; `npm run authorize -- linkedin` renews it.
+- Reels 001, 002, 004 and 005 were delivered before the poller existed and
+  have no delivery record, so it will never touch them. Post those by hand.
+- Reel 003 (hardcoded SUM range → Table) is still parked, but on a narrower
+  reason since 2026-08-24: the insert beat exists now, and what it still needs
+  is a structured Table reference, which nothing renders or verifies yet.
 
 ## Next build items (in rough order)
 
-1. Schema widening: row/column-insert beats (unparks 003, unlocks the
-   XLOOKUP-vs-inserted-column family properly)
-2. ✅-reaction poller: mark reels posted automatically, close the loop
+1. ✅ Schema widening: insert beats, shipped 2026-08-24 (reel 006 uses them)
+2. ✅ Poller + auto-posting, shipped 2026-08-24
 3. Nightly analytics pull (IG insights + YouTube) into SQLite → miner input
-4. LinkedIn static-frame second composition variants, if the A/B warrants it
+4. Table / structured-reference rendering, which is what 003 is now parked on
+5. LinkedIn static-frame second composition variants, if the A/B warrants it
