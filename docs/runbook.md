@@ -11,9 +11,10 @@ playbook artifact). Reasoning for every rule: `DECISIONS.md`.
 | `smbsolved-reels` | Weekdays 06:30 | Next numbered backlog item → writer → real-Excel gate → reviewer → Jimmy's voice → render + LinkedIn stills → OneDrive archive + Slack post in #social-media |
 | `smbsolved-reels-mine` | Sundays 17:00 | Stack Exchange + Reddit RSS → model distills candidates → appended under "## Mined" in the backlog + Slack notice |
 | `smbsolved-reels-poll` | Every 10 min (register with `scripts\register-poll-task.ps1`) | Looks for a ✅ on a delivered reel and posts it: YouTube Shorts, Instagram Reels, LinkedIn (held to the cadence), TikTok draft. Replies in the reel's Slack thread with what went where |
+| `smbsolved-reels-analytics` | Daily 05:45 (register with `scripts\register-analytics-task.ps1`) | Instagram insights + YouTube statistics for reels posted in the last five weeks into out/analytics.db, copied to the OneDrive archive. The Sunday miner reads it |
 | `smbsolved-reels-newsletter` | Every other Monday 07:30 (register with `scripts\register-newsletter-task.ps1` if not yet) | Drafts The Tie-Out from the newest POSTED reels, Instagram permalinks filled, close note drafted for review → Kit draft broadcast + Slack |
 
-All four need the PC on (sleep is fine) and Jimmy logged in (lock screen is
+All five need the PC on (sleep is fine) and Jimmy logged in (lock screen is
 fine). A missed daily run pages via healthchecks → Slack.
 
 ## Jimmy's loop
@@ -43,6 +44,8 @@ npm run template:far -- --check <path>   # re-verify a hand-edited copy, then pu
 npm run ig                       # Instagram: who am I + latest media
 npm run poll                     # check for ✅ and post now, instead of waiting
 npm run poll -- --dry-run        # say what would happen, change nothing
+npm run analytics                # pull the numbers now
+npm run analytics -- --report    # exactly what the miner will be told
 npm run authorize -- youtube     # one-time consent per platform (also linkedin, tiktok)
 npm run kit:setup                # idempotent Kit objects (tag/sequence/emails)
 npm run site:publish -- <local> <repoPath>  # push any file to smbsolved.com
@@ -79,6 +82,9 @@ says exactly which cells disagree.
   audit, so the poller pushes a draft and says so. It never reports "posted".
 - LinkedIn's credential is a 60-day access token, not a refresh token. The
   poller warns in Slack a week out; `npm run authorize -- linkedin` renews it.
+- Analytics cover Instagram and YouTube only. LinkedIn has no analytics API
+  for personal-profile posts, and TikTok videos are published by hand so the
+  pipeline never learns their ids.
 - Reels 001, 002, 004 and 005 were delivered before the poller existed and
   have no delivery record, so it will never touch them. Post those by hand.
 - Reel 003 (hardcoded SUM range → Table) is still parked, but on a narrower
@@ -89,6 +95,6 @@ says exactly which cells disagree.
 
 1. ✅ Schema widening: insert beats, shipped 2026-08-24 (reel 006 uses them)
 2. ✅ Poller + auto-posting, shipped 2026-08-24
-3. Nightly analytics pull (IG insights + YouTube) into SQLite → miner input
+3. ✅ Nightly analytics into SQLite, feeding the miner, shipped 2026-08-24
 4. Table / structured-reference rendering, which is what 003 is now parked on
 5. LinkedIn static-frame second composition variants, if the A/B warrants it

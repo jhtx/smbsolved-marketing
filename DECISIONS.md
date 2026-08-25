@@ -425,3 +425,30 @@ in `NNN-slug.delivery.json`, a platform that already succeeded is never retried,
 and one platform failing never blocks the others. Failures reply in the reel's
 own Slack thread. Reels delivered before this shipped have no delivery record
 and are therefore invisible to the poller — they cannot be double-posted.
+
+## 2026-08-24 — Performance numbers are pulled nightly and fed to the miner
+`pipeline/analytics.ts`, daily at 05:45 (`scripts/register-analytics-task.ps1`).
+The point is not a dashboard, it is closing the loop: the Sunday miner picks
+next week's topics, and it now sees which of this month's reels people actually
+finished. `performanceReport()` renders the latest numbers per reel, best and
+worst, with each reel's title so the model sees the topic rather than a
+filename, and mine.ts drops the section entirely when there are fewer than four
+data points. A blank "what worked" table would invite the model to invent a
+pattern it cannot have seen.
+
+Honest about coverage, because two of the four platforms give nothing:
+Instagram has real per-media insights, YouTube has counts plus watch time when
+the Analytics scope is authorised (and lags up to 48 hours), LinkedIn has no
+analytics API for member posts (only organization pages, and these go out from
+a personal profile), and TikTok is invisible because the drafts are published
+by hand so the pipeline never learns the video id.
+
+Storage is SQLite through `node:sqlite`, built into Node 24, so no dependency.
+One row per reel per platform per day, primary key on all three, so a re-run
+overwrites instead of double-counting. It lives in out/ and is copied to the
+OneDrive archive on every run: out/ is disposable and the history is not, and
+committing a binary that rewrites daily would bloat the repo the same way the
+MP4s would have.
+
+Only reels posted in the last five weeks are pulled. The tail is noise, and
+bounding the window keeps the nightly call count flat as the channel grows.

@@ -23,7 +23,8 @@
     "typecheck": "tsc --noEmit",
     "poll": "tsx pipeline/poll.ts",
     "authorize": "tsx pipeline/post/authorize.ts",
-    "host": "tsx pipeline/post/host.ts"
+    "host": "tsx pipeline/post/host.ts",
+    "analytics": "tsx pipeline/analytics.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

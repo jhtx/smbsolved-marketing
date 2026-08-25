@@ -79,6 +79,9 @@ reports `drafted`, never `posted`. LinkedIn is held to two posts a week
 automatically.
 
 ```bash
+npm run analytics              # nightly: Instagram + YouTube numbers into
+                               # out/analytics.db, archived to OneDrive.
+                               # LinkedIn and TikTok give nothing back.
 npm run mine                   # weekly: pull Excel-problem threads, append tagged
                                # candidates under "## Mined" in the backlog.
                                # Promote one by giving it a **NNN** number.

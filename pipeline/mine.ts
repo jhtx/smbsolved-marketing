@@ -18,6 +18,7 @@ import './env';
 import { appendFileSync, readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { askForJson } from './llm';
+import { performanceReport } from './analytics';
 import { notify } from './deliver';
 
 type Thread = { src: string; title: string; text: string; url: string; score: number; comments: number };
@@ -218,9 +219,14 @@ export async function mine(opts: { limit?: number; dry?: boolean } = {}) {
 
   const backlog = readFileSync('content/backlog.md', 'utf8');
   const system = readFileSync('prompts/miner.md', 'utf8');
+  // What the published reels did, when there is enough of it to mean anything.
+  // Left out entirely rather than shown empty: a blank table invites the model
+  // to invent a pattern it cannot have seen.
+  const performance = performanceReport();
   const user = [
     `Distill up to ${limit} backlog candidates from these threads.`,
     '',
+    ...(performance ? [performance, ''] : []),
     '## The current backlog (do not duplicate anything here)',
     '```',
     backlog,
