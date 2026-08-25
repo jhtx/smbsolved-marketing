@@ -22,6 +22,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { reelSchema, CUES, type Reel } from '../src/reel/schema';
+import { DATA_KEYS, colIndex, colLetter, dataColumnCount, initialRows } from '../src/reel/sheet';
 import { CAPTION } from '../src/reel/theme';
 import { jobFromReel, recalcInExcel, sameFormula, type ExcelReport } from './excel';
 
@@ -37,10 +38,24 @@ export function verify(raw: unknown, opts: { structureOnly?: boolean } = {}): Ve
   const f: Finding[] = [];
 
   const rowNums = new Set(reel.sheet.rows.map((r) => r.n));
+  /** A rendered DATA cell. The marks column past the data is not one. */
   const cellExists = (ref: string) => {
-    const m = /^([A-C])(\d+)$/.exec(ref);
-    return !!m && rowNums.has(Number(m[2]));
+    const m = /^([A-Z])(\d{1,3})$/.exec(ref);
+    return !!m && colIndex(m[1]) < dataColumnCount(reel) && rowNums.has(Number(m[2]));
   };
+  /**
+   * The same test against the sheet as it stood BEFORE the insert. Refs in
+   * `formulas.before.text` are already written in those old coordinates, so
+   * they are checked here rather than being translated first.
+   */
+  const initialRowNums = new Set(initialRows(reel).map((r) => r.n));
+  const initialCols = dataColumnCount(reel) - (reel.sheet.mutation?.kind === 'insertColumn' ? 1 : 0);
+  const cellExistedBefore = (ref: string) => {
+    const m = /^([A-Z])(\d{1,3})$/.exec(ref);
+    return !!m && colIndex(m[1]) < initialCols && initialRowNums.has(Number(m[2]));
+  };
+  const refsIn = (text: string) =>
+    (text.match(/(?<![A-Z0-9$])\$?[A-Z]{1,2}\$?\d{1,3}/g) ?? []).map((r) => r.replace(/\$/g, ''));
 
   // --- structure -----------------------------------------------------------
   if (!cellExists(reel.sheet.target))
@@ -61,9 +76,19 @@ export function verify(raw: unknown, opts: { structureOnly?: boolean } = {}): Ve
       f.push({ level: 'error', message: `formulas.${key} targets ${fm.cell}, sheet target is ${reel.sheet.target}` });
     if (!fm.expected.trim())
       f.push({ level: 'error', message: `formulas.${key}.expected is empty — nothing to verify against` });
-    for (const ref of fm.text.match(/\$?[A-C]\$?\d{1,3}/g) ?? [])
-      if (!cellExists(ref.replace(/\$/g, '')))
-        f.push({ level: 'error', message: `formulas.${key} references ${ref}, outside the rendered sheet` });
+    // `before.text` is what the viewer types BEFORE the insert, so its refs
+    // are in the old sheet's coordinates; everything else is in the final
+    // sheet's. Checking each against the right one is what stops a writer
+    // quietly referencing a column that does not exist yet.
+    const preInsert = key === 'before' && !!reel.sheet.mutation;
+    for (const ref of refsIn(fm.text))
+      if (preInsert ? !cellExistedBefore(ref) : !cellExists(ref))
+        f.push({
+          level: 'error',
+          message: preInsert
+            ? `formulas.before references ${ref}, which is outside the sheet as it stands before the insert`
+            : `formulas.${key} references ${ref}, outside the rendered sheet`,
+        });
   }
 
   if (reel.formulas.before.text === reel.formulas.after.text)
@@ -81,6 +106,51 @@ export function verify(raw: unknown, opts: { structureOnly?: boolean } = {}): Ve
   for (const required of ['hook', 'payoff'] as const)
     if (!cues.includes(required))
       f.push({ level: 'error', message: `missing required cue: ${required}` });
+
+  // --- the mutation, if there is one ---------------------------------------
+  // The whole family of "it worked until someone changed the sheet" reels
+  // hangs on three things agreeing: a newcomer that actually holds something,
+  // a working value before it arrives, and a formula the insert rewrote.
+  {
+    const m = reel.sheet.mutation;
+    const before = reel.formulas.before;
+    if (m) {
+      if (m.kind === 'insertColumn') {
+        const i = colIndex(m.at);
+        if (i < 0 || i >= dataColumnCount(reel))
+          f.push({ level: 'error', message: `mutation inserts column ${m.at}, which the sheet does not render` });
+        else if (!reel.sheet.rows.some((r) => r[DATA_KEYS[i]]))
+          f.push({ level: 'error', message: `mutation inserts column ${m.at} but every cell in it is empty — nothing would appear` });
+      } else {
+        const row = reel.sheet.rows.find((r) => r.n === Number(m.at));
+        if (!row) f.push({ level: 'error', message: `mutation inserts row ${m.at}, which is not in the sheet` });
+        else if (!row.a && !row.b)
+          f.push({ level: 'error', message: `mutation inserts row ${m.at} but it is empty — nothing would appear` });
+      }
+      if (!cues.includes(m.kind))
+        f.push({ level: 'error', message: `sheet.mutation is ${m.kind} but no line carries the ${m.kind} cue` });
+      if (!cues.includes('showInitial'))
+        f.push({ level: 'error', message: 'a mutation reel needs a showInitial cue — the viewer has to see the formula working before it breaks' });
+      if (!before.expectedInitial?.trim())
+        f.push({ level: 'error', message: 'formulas.before.expectedInitial is required on a mutation reel: what the formula shows before the insert' });
+      if (!before.textAfter?.trim())
+        f.push({ level: 'error', message: 'formulas.before.textAfter is required on a mutation reel: the formula as Excel rewrites it during the insert' });
+      if (before.expectedInitial && before.expectedInitial === before.expected)
+        f.push({ level: 'error', message: 'expectedInitial equals expected — the insert changed nothing, so there is no lesson' });
+      if (before.textAfter)
+        for (const ref of refsIn(before.textAfter))
+          if (!cellExists(ref))
+            f.push({ level: 'error', message: `formulas.before.textAfter references ${ref}, outside the rendered sheet` });
+    } else {
+      for (const cue of ['showInitial', 'insertColumn', 'insertRow'] as const)
+        if (cues.includes(cue))
+          f.push({ level: 'error', message: `cue ${cue} needs sheet.mutation — there is no insert in this reel` });
+      if (before.expectedInitial || before.textAfter)
+        f.push({ level: 'error', message: 'expectedInitial / textAfter only mean something on a reel with sheet.mutation' });
+      if (reel.sheet.rows.some((r) => r.c))
+        f.push({ level: 'error', message: 'column C holds data but nothing inserts a column, so it would never render' });
+    }
+  }
 
   reel.script.forEach((l, i) => {
     const cap = l.caption ?? l.vo;
@@ -160,17 +230,24 @@ export function verify(raw: unknown, opts: { structureOnly?: boolean } = {}): Ve
 
   // --- column fit (widths auto-size, but A and B compete for one card) ------
   {
-    const aMax = Math.max(...reel.sheet.rows.map((r) => r.a.length), 0);
-    const bMax = Math.max(
-      ...reel.sheet.rows.map((r) => r.b.length),
+    const n = dataColumnCount(reel);
+    const value = [
       ...Object.values(reel.sheet.fillDown).map((s) => s.length),
       reel.formulas.before.expected.length,
+      reel.formulas.before.expectedInitial?.length ?? 0,
       reel.formulas.after.expected.length,
+    ];
+    const widest = DATA_KEYS.slice(0, n).map((key, i) =>
+      Math.max(...reel.sheet.rows.map((r) => r[key].length), ...(i === n - 1 ? value : [0]), 0),
     );
-    if (aMax + bMax > 42)
+    // Each data column costs ~36px of padding out of the 898px card, and the
+    // audit marks keep 190px of it, so the budget tightens as columns are added.
+    const budget = n === 2 ? 42 : 38;
+    const total = widest.reduce((a, b) => a + b, 0);
+    if (total > budget)
       f.push({
         level: 'warn',
-        message: `longest A (${aMax}) + longest B (${bMax}) chars exceed what both columns can show; one will clip — shorten the data`,
+        message: `${widest.map((w, i) => `${colLetter(i)} ${w}`).join(' + ')} = ${total} chars across ${n} columns exceeds the ~${budget} that fit; something will clip — shorten the data`,
       });
   }
 
@@ -192,7 +269,18 @@ export function verify(raw: unknown, opts: { structureOnly?: boolean } = {}): Ve
   return { findings: f, verification };
 }
 
-/** Runs both formulas in Excel and compares what Excel displays to `expected`. */
+/**
+ * Runs the reel's formulas in Excel and compares what Excel displays to what
+ * the reel claims the viewer will see.
+ *
+ * Two comparisons for a plain reel: the broken formula, then the fix.
+ *
+ * Three for a mutation reel, because there are three moments on screen — the
+ * formula working in the original sheet, the same formula after Excel shifted
+ * and rewrote it during the insert, and the fix. The middle one is the whole
+ * lesson, and its `formulaReadback` is compared against `textAfter`: Excel
+ * decides what an insert does to a formula, and the reel has to show that.
+ */
 function recalc(reel: Reel): VerifyResult {
   const out: Finding[] = [];
   let report: ExcelReport;
@@ -204,31 +292,61 @@ function recalc(reel: Reel): VerifyResult {
     };
   }
 
-  for (const key of ['before', 'after'] as const) {
-    const fm = reel.formulas[key];
-    const got = report.results.find((x) => x.key === key);
+  const { before, after } = reel.formulas;
+  type Check = { key: string; where: string; typed: string; expected: string; isError: boolean };
+  const checks: Check[] = reel.sheet.mutation
+    ? [
+        {
+          key: 'initial',
+          where: 'formulas.before, in the sheet before the insert',
+          typed: before.text,
+          expected: before.expectedInitial ?? '',
+          isError: false,
+        },
+        {
+          key: 'before',
+          where: 'formulas.before, after Excel performed the insert',
+          typed: before.textAfter ?? '',
+          expected: before.expected,
+          isError: before.isError,
+        },
+        { key: 'after', where: 'formulas.after', typed: after.text, expected: after.expected, isError: after.isError },
+      ]
+    : [
+        { key: 'before', where: 'formulas.before', typed: before.text, expected: before.expected, isError: before.isError },
+        { key: 'after', where: 'formulas.after', typed: after.text, expected: after.expected, isError: after.isError },
+      ];
+
+  for (const c of checks) {
+    const got = report.results.find((x) => x.key === c.key);
     if (!got) {
-      out.push({ level: 'error', message: `formulas.${key}: Excel returned no result` });
+      out.push({ level: 'error', message: `${c.where}: Excel returned no result` });
       continue;
     }
     if (got.setError) {
-      out.push({ level: 'error', message: `formulas.${key}: Excel rejected the formula — ${got.setError}` });
+      out.push({ level: 'error', message: `${c.where}: Excel rejected the formula — ${got.setError}` });
       continue;
     }
-    if (got.formulaReadback && !sameFormula(got.formulaReadback, fm.text))
+    if (got.formulaReadback && !sameFormula(got.formulaReadback, c.typed))
       out.push({
         level: 'error',
-        message: `formulas.${key}: Excel rewrote the formula to ${got.formulaReadback} (typed: ${fm.text}). Fix the text so the viewer sees exactly what Excel runs.`,
+        message:
+          c.key === 'before' && reel.sheet.mutation
+            ? `formulas.before.textAfter says the insert leaves ${c.typed}, but Excel made it ${got.formulaReadback}. Show what Excel actually does.`
+            : `${c.where}: Excel rewrote the formula to ${got.formulaReadback} (typed: ${c.typed}). Fix the text so the viewer sees exactly what Excel runs.`,
       });
-    if (got.text !== fm.expected)
+    if (got.text !== c.expected)
       out.push({
         level: 'error',
-        message: `formulas.${key}: expected "${fm.expected}", Excel ${report.excel} displays "${got.text}"`,
+        message: `${c.where}: expected "${c.expected}", Excel ${report.excel} displays "${got.text}"`,
       });
-    if (got.isError !== fm.isError)
+    if (got.isError !== c.isError)
       out.push({
         level: 'error',
-        message: `formulas.${key}: isError is ${fm.isError} but Excel ${got.isError ? 'returned an error value' : 'returned a normal value'}`,
+        message:
+          c.key === 'initial'
+            ? `formulas.before returns an error in the ORIGINAL sheet. The premise of an insert reel is that it worked until the insert.`
+            : `${c.where}: isError is ${c.isError} but Excel ${got.isError ? 'returned an error value' : 'returned a normal value'}`,
       });
   }
 
@@ -246,7 +364,7 @@ function recalc(reel: Reel): VerifyResult {
 /** Anything that changes what Excel would compute invalidates a stamp. */
 export function formulasHash(reel: Reel): string {
   const h = createHash('sha256');
-  h.update(JSON.stringify({ rows: reel.sheet.rows, formulas: reel.formulas }));
+  h.update(JSON.stringify({ rows: reel.sheet.rows, mutation: reel.sheet.mutation ?? null, formulas: reel.formulas }));
   return h.digest('hex').slice(0, 16);
 }
 

@@ -7,6 +7,17 @@ import {
   useCurrentFrame,
 } from 'remotion';
 import type { Reel, Row } from './schema';
+import {
+  COL_ORDER,
+  DATA_KEYS,
+  colIndex,
+  colLetter,
+  dataColumnCount,
+  initialRef,
+  marksColumn,
+  splitRef,
+  type ColKey,
+} from './sheet';
 import { CAPTION, COLOR, FONT, GEO, SAFE, cellBox, colWidthsFor, type ColW } from './theme';
 import { buildTimeline, progress, started, type Timing } from './timeline';
 
@@ -21,6 +32,62 @@ export type ExcelReelProps = {
 const eOut = (x: number) => 1 - Math.pow(1 - x, 3);
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 
+/* ------------------------------------------------------------------ */
+/* the insert                                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A mutation reel spends its first half in a sheet that is one column (or one
+ * row) narrower than the JSON describes. Rather than model two sheets, the
+ * newcomer is rendered at zero size and opens on its cue, which is also what
+ * it looks like in Excel.
+ *
+ * `p` runs 0 → 1 across the insert. Everything at or past the newcomer is
+ * displaced by `size * (1 - p)`, so the whole sheet slides over as it opens.
+ */
+type Insert = {
+  kind: 'insertColumn' | 'insertRow' | null;
+  at: string;
+  p: number;
+  /** pixels the newcomer occupies once open */
+  size: number;
+};
+
+const NO_INSERT: Insert = { kind: null, at: '', p: 1, size: 0 };
+
+function insertState(reel: Reel, cues: CueMap, frame: number, colW: ColW): Insert {
+  const m = reel.sheet.mutation;
+  if (!m) return NO_INSERT;
+  return {
+    kind: m.kind,
+    at: m.at,
+    p: eOut(clamp(progress(cues[m.kind], frame) * 1.8)),
+    size: m.kind === 'insertColumn' ? colW[m.at as ColKey] : GEO.rowH,
+  };
+}
+
+/** Displacement for anything positioned absolutely: it rides the insert. */
+function shift(ins: Insert, ref: string): { dx: number; dy: number } {
+  if (!ins.kind) return { dx: 0, dy: 0 };
+  const { col, row } = splitRef(ref);
+  const back = ins.size * (1 - ins.p);
+  return ins.kind === 'insertColumn'
+    ? { dx: colIndex(col) >= colIndex(ins.at) ? -back : 0, dy: 0 }
+    : { dx: 0, dy: row >= Number(ins.at) ? -back : 0 };
+}
+
+/**
+ * Column letters and row numbers are what Excel would print, which is a matter
+ * of position, not of which key the JSON used. Until the insert lands, every
+ * label past the newcomer is one lower — the sheet genuinely has one less
+ * column, and its last column is genuinely called C and not D.
+ */
+const columnLabel = (ins: Insert, i: number) =>
+  colLetter(ins.kind === 'insertColumn' && ins.p === 0 && i > colIndex(ins.at) ? i - 1 : i);
+
+const rowLabel = (ins: Insert, n: number) =>
+  ins.kind === 'insertRow' && ins.p === 0 && n > Number(ins.at) ? n - 1 : n;
+
 export const ExcelReel: React.FC<ExcelReelProps> = ({
   reel,
   timing,
@@ -31,7 +98,10 @@ export const ExcelReel: React.FC<ExcelReelProps> = ({
   const { lines, cues } = buildTimeline(reel.script, timing);
 
   const colW = colWidthsFor(reel);
-  const target = cellBox(reel.sheet.target, colW);
+  const ins = insertState(reel, cues, frame, colW);
+  const targetShift = shift(ins, reel.sheet.target);
+  const box = cellBox(reel.sheet.target, colW);
+  const target = { ...box, x: box.x + targetShift.dx, y: box.y + targetShift.dy };
   const pFix = progress(cues.typeFix, frame);
   const fixing = started(cues.typeFix, frame);
 
@@ -43,7 +113,7 @@ export const ExcelReel: React.FC<ExcelReelProps> = ({
       <Vignette />
       <Eyebrow id={reel.id} />
 
-      <SheetCard reel={reel} frame={frame} cues={cues} colW={colW} />
+      <SheetCard reel={reel} frame={frame} cues={cues} colW={colW} ins={ins} />
       <AuditMarks
         target={target}
         frame={frame}
@@ -60,6 +130,8 @@ export const ExcelReel: React.FC<ExcelReelProps> = ({
           cues={cues}
           fadeOut={fixing ? clamp(pFix * 4) : 0}
           colW={colW}
+          reel={reel}
+          ins={ins}
         />
       ) : null}
 
@@ -131,15 +203,17 @@ const Eyebrow: React.FC<{ id: string }> = ({ id }) => (
 
 type CueMap = ReturnType<typeof buildTimeline>['cues'];
 
-const SheetCard: React.FC<{ reel: Reel; frame: number; cues: CueMap; colW: ColW }> = ({
+const SheetCard: React.FC<{ reel: Reel; frame: number; cues: CueMap; colW: ColW; ins: Insert }> = ({
   reel,
   frame,
   cues,
   colW,
+  ins,
 }) => {
   const enter = eOut(clamp(progress(cues.revealTop, frame) * 3.2));
-  const target = reel.sheet.target;
-  const box = cellBox(target, colW);
+  const raw = cellBox(reel.sheet.target, colW);
+  const d = shift(ins, reel.sheet.target);
+  const box = { ...raw, x: raw.x + d.dx, y: raw.y + d.dy };
 
   return (
     <div
@@ -159,10 +233,10 @@ const SheetCard: React.FC<{ reel: Reel; frame: number; cues: CueMap; colW: ColW 
         transform: `translateY(${(1 - enter) * 46}px)`,
       }}
     >
-      <FormulaBar reel={reel} frame={frame} cues={cues} />
-      <ColumnHeader colW={colW} />
+      <FormulaBar reel={reel} frame={frame} cues={cues} ins={ins} />
+      <ColumnHeader colW={colW} reel={reel} ins={ins} />
       {reel.sheet.rows.map((r) => (
-        <SheetRow key={r.n} row={r} reel={reel} frame={frame} cues={cues} colW={colW} />
+        <SheetRow key={r.n} row={r} reel={reel} frame={frame} cues={cues} colW={colW} ins={ins} />
       ))}
 
       <Selection box={box} frame={frame} cues={cues} />
@@ -204,29 +278,46 @@ const Selection: React.FC<{
   );
 };
 
-const FormulaBar: React.FC<{ reel: Reel; frame: number; cues: CueMap }> = ({
+const FormulaBar: React.FC<{ reel: Reel; frame: number; cues: CueMap; ins: Insert }> = ({
   reel,
   frame,
   cues,
+  ins,
 }) => {
   const { before, after } = reel.formulas;
   const pType = progress(cues.typeFormula, frame);
   const pFix = progress(cues.typeFix, frame);
 
+  // On a mutation reel the insert rewrites the formula without anyone typing:
+  // the range stretches over the new column, the column index does not move.
+  // From that moment on, THAT is the formula on screen and the one the fix is
+  // compared against.
+  const inserted = ins.kind !== null && ins.p > 0;
+  const broken = inserted && before.textAfter ? before.textAfter : before.text;
+
   let head = '';
   let lit = '';
   let tail = '';
   let typing = false;
+  let litColor: string = COLOR.xl;
 
   if (started(cues.typeFix, frame)) {
     // Highlight whatever actually changed between the two formulas.
-    const d = diff(before.text, after.text);
+    const d = diff(broken, after.text);
     const n = Math.floor(pFix * after.text.length);
     const s = after.text.slice(0, n);
     head = s.slice(0, Math.min(n, d.start));
     lit = s.slice(Math.min(n, d.start), Math.min(n, d.end));
     tail = s.slice(Math.min(n, d.end));
     typing = pFix < 1;
+  } else if (inserted) {
+    // Red, because what just changed is what broke it. Excel does this in one
+    // step, so there is no typing animation here.
+    const d = diff(before.text, broken);
+    head = broken.slice(0, d.start);
+    lit = broken.slice(d.start, d.end);
+    tail = broken.slice(d.end);
+    litColor = COLOR.tick;
   } else if (started(cues.typeFormula, frame)) {
     head = before.text.slice(0, Math.floor(pType * before.text.length));
     typing = pType < 1;
@@ -236,12 +327,18 @@ const FormulaBar: React.FC<{ reel: Reel; frame: number; cues: CueMap }> = ({
 
   // A rewrite (most of the formula changed) is not a "tweak": highlighting
   // it all is noise, so only highlight when the changed span is a minority.
-  const d = diff(before.text, after.text);
-  const isTweak = d.end - d.start < after.text.length * 0.6;
+  const d = diff(broken, after.text);
+  const isTweak = started(cues.typeFix, frame)
+    ? d.end - d.start < after.text.length * 0.6
+    : true;
 
   // Long formulas wrap onto two lines at a smaller size instead of clipping.
-  const longest = Math.max(before.text.length, after.text.length);
+  const longest = Math.max(before.text.length, broken.length, after.text.length);
   const fbarFont = longest > 44 ? 22 : 29;
+
+  // The name box shows where the cell IS. An inserted column slides the target
+  // along with everything else, so B8 becomes C8 on its own.
+  const nameBox = (inserted ? reel.sheet.target : initialRef(reel, reel.sheet.target)) ?? reel.sheet.target;
 
   const cellStyle: React.CSSProperties = {
     display: 'flex',
@@ -260,7 +357,7 @@ const FormulaBar: React.FC<{ reel: Reel; frame: number; cues: CueMap }> = ({
       }}
     >
       <div style={{ ...cellStyle, width: 150, paddingLeft: 18, fontSize: 28, color: '#444' }}>
-        {reel.sheet.target}
+        {nameBox}
       </div>
       <div style={{ ...cellStyle, width: 64, justifyContent: 'center', fontStyle: 'italic', fontSize: 27, color: '#6C6C6C' }}>
         fx
@@ -281,7 +378,7 @@ const FormulaBar: React.FC<{ reel: Reel; frame: number; cues: CueMap }> = ({
       >
         <span>
           {head}
-          <span style={isTweak ? { color: COLOR.xl, fontWeight: 700 } : undefined}>{lit}</span>
+          <span style={isTweak ? { color: litColor, fontWeight: 700 } : undefined}>{lit}</span>
           {tail}
         </span>
         {caret ? (
@@ -300,35 +397,57 @@ const FormulaBar: React.FC<{ reel: Reel; frame: number; cues: CueMap }> = ({
   );
 };
 
-const ColumnHeader: React.FC<{ colW: ColW }> = ({ colW }) => (
-  <div
-    style={{
-      display: 'flex',
-      height: GEO.headH,
-      background: COLOR.headFill,
-      borderBottom: `1px solid ${COLOR.grid}`,
-    }}
-  >
-    {[['', GEO.rhW], ['A', colW.A], ['B', colW.B], ['C', colW.C]].map(
-      ([label, w], i) => (
+const ColumnHeader: React.FC<{ colW: ColW; reel: Reel; ins: Insert }> = ({ colW, reel, ins }) => {
+  const cols = renderedColumns(reel, colW, ins);
+  return (
+    <div
+      style={{
+        display: 'flex',
+        height: GEO.headH,
+        background: COLOR.headFill,
+        borderBottom: `1px solid ${COLOR.grid}`,
+      }}
+    >
+      <div style={{ width: GEO.rhW, borderRight: `1px solid ${COLOR.grid}`, flexShrink: 0 }} />
+      {cols.map((c, i) => (
         <div
-          key={i}
+          key={c.col}
           style={{
-            width: w as number,
+            width: c.width,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 23,
             color: COLOR.headInk,
             borderRight: `1px solid ${COLOR.grid}`,
+            overflow: 'hidden',
+            flexShrink: 0,
           }}
         >
-          {label as string}
+          {columnLabel(ins, i)}
         </div>
-      ),
-    )}
-  </div>
-);
+      ))}
+      {/* the sheet always continues past the data, the way Excel does */}
+      <div style={{ flex: 1 }} />
+    </div>
+  );
+};
+
+/**
+ * The columns a row actually draws: every data column, then the one the audit
+ * marks live in. The newcomer's width is whatever the insert has opened so far.
+ */
+function renderedColumns(reel: Reel, colW: ColW, ins: Insert) {
+  const cols: { col: ColKey; width: number; key: (typeof DATA_KEYS)[number] | null }[] = [];
+  for (let i = 0; i < dataColumnCount(reel); i++) {
+    const col = COL_ORDER[i];
+    const isNew = ins.kind === 'insertColumn' && ins.at === col;
+    cols.push({ col, width: isNew ? colW[col] * ins.p : colW[col], key: DATA_KEYS[i] });
+  }
+  const marks = marksColumn(reel);
+  cols.push({ col: marks, width: colW[marks], key: null });
+  return cols;
+}
 
 const SheetRow: React.FC<{
   row: Row;
@@ -336,7 +455,8 @@ const SheetRow: React.FC<{
   frame: number;
   cues: CueMap;
   colW: ColW;
-}> = ({ row, reel, frame, cues, colW }) => {
+  ins: Insert;
+}> = ({ row, reel, frame, cues, colW, ins }) => {
   const cue = row.group === 'bottom' ? cues.revealBottom : cues.revealTop;
   const first = reel.sheet.rows.find((r) => r.group === row.group)?.n ?? 1;
   const idx = row.n - first;
@@ -345,7 +465,13 @@ const SheetRow: React.FC<{
       ? eOut(clamp(progress(cues.revealTop, frame) * 3.2))
       : eOut(clamp(progress(cue, frame) * 3.2 - idx * 0.5));
 
-  const isTarget = `B${row.n}` === reel.sheet.target;
+  // The row a mutation inserts is not there at all until its cue; it opens to
+  // full height and pushes everything below it down, which is the beat.
+  const isNewRow = ins.kind === 'insertRow' && Number(ins.at) === row.n;
+  const height = isNewRow ? GEO.rowH * ins.p : GEO.rowH;
+  if (isNewRow && ins.p === 0) return <div style={{ height: 0 }} />;
+
+  const cols = renderedColumns(reel, colW, ins);
   const cellBase: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
@@ -355,10 +481,11 @@ const SheetRow: React.FC<{
     borderBottom: `1px solid ${COLOR.grid}`,
     overflow: 'hidden',
     whiteSpace: 'nowrap',
+    flexShrink: 0,
   };
 
   return (
-    <div style={{ display: 'flex', height: GEO.rowH, opacity: p }}>
+    <div style={{ display: 'flex', height, opacity: isNewRow ? p * ins.p : p }}>
       <div
         style={{
           width: GEO.rhW,
@@ -370,42 +497,52 @@ const SheetRow: React.FC<{
           borderBottom: `1px solid ${COLOR.grid}`,
           fontSize: 23,
           color: COLOR.headInk,
+          flexShrink: 0,
         }}
       >
-        {row.n}
+        {rowLabel(ins, row.n)}
       </div>
-      <div
-        style={{
-          ...cellBase,
-          width: colW.A,
-          justifyContent: row.right ? 'flex-end' : 'flex-start',
-          fontWeight: row.hdr ? 700 : 400,
-          transform: `translateX(${(1 - p) * -14}px)`,
-        }}
-      >
-        {row.a}
-      </div>
-      <div
-        style={{
-          ...cellBase,
-          width: colW.B,
-          fontWeight: row.hdr ? 700 : 400,
-          // Excel right-aligns numbers. Amounts in column B (and a numeric
-          // result in the target cell) must sit right or the sheet reads fake.
-          justifyContent: looksNumeric(
-            isTarget ? reel.formulas.after.expected : reel.sheet.fillDown[String(row.n)] ?? row.b,
-          )
-            ? 'flex-end'
-            : 'flex-start',
-        }}
-      >
-        {isTarget ? (
-          <TargetValue reel={reel} frame={frame} cues={cues} />
-        ) : (
-          <FillDownValue reel={reel} row={row} frame={frame} cues={cues} />
-        )}
-      </div>
-      <div style={{ ...cellBase, width: colW.C }} />
+
+      {cols.map((c, i) => {
+        if (!c.key) return <div key={c.col} style={{ ...cellBase, width: c.width }} />;
+        const isTarget = `${c.col}${row.n}` === reel.sheet.target;
+        const isLast = i === cols.length - 2;
+        const text = row[c.key];
+        return (
+          <div
+            key={c.col}
+            style={{
+              ...cellBase,
+              width: c.width,
+              padding: c.width < 40 ? 0 : cellBase.padding,
+              fontWeight: row.hdr ? 700 : 400,
+              // Excel right-aligns numbers. Amounts (and a numeric result in
+              // the target cell) must sit right or the sheet reads fake.
+              justifyContent: i === 0
+                ? row.right
+                  ? 'flex-end'
+                  : 'flex-start'
+                : looksNumeric(
+                      isTarget
+                        ? reel.formulas.after.expected
+                        : (isLast ? reel.sheet.fillDown[String(row.n)] : undefined) ?? text,
+                    )
+                  ? 'flex-end'
+                  : 'flex-start',
+              transform: i === 0 ? `translateX(${(1 - p) * -14}px)` : undefined,
+            }}
+          >
+            {isTarget ? (
+              <TargetValue reel={reel} frame={frame} cues={cues} />
+            ) : isLast ? (
+              <FillDownValue reel={reel} row={row} frame={frame} cues={cues} text={text} />
+            ) : (
+              text
+            )}
+          </div>
+        );
+      })}
+      <div style={{ flex: 1, borderBottom: `1px solid ${COLOR.grid}` }} />
     </div>
   );
 };
@@ -442,6 +579,16 @@ const TargetValue: React.FC<{ reel: Reel; frame: number; cues: CueMap }> = ({
       </span>
     );
   }
+  // Mutation reels only: the formula lands its CORRECT value first, in plain
+  // ink. No tick — it is not a fix, it is a formula quietly doing its job,
+  // which is what makes the insert land a moment later.
+  if (started(cues.showInitial, frame) && before.expectedInitial) {
+    return (
+      <span style={{ opacity: clamp(progress(cues.showInitial, frame) * 5) }}>
+        {before.expectedInitial}
+      </span>
+    );
+  }
   return null;
 };
 
@@ -450,9 +597,11 @@ const FillDownValue: React.FC<{
   row: Row;
   frame: number;
   cues: CueMap;
-}> = ({ reel, row, frame, cues }) => {
+  /** whatever the cell holds when nothing fills down into it */
+  text: string;
+}> = ({ reel, row, frame, cues, text }) => {
   const fill = reel.sheet.fillDown[String(row.n)];
-  if (!fill) return <>{row.b}</>;
+  if (!fill) return <>{text}</>;
 
   const keys = Object.keys(reel.sheet.fillDown).sort();
   const idx = keys.indexOf(String(row.n));
@@ -535,7 +684,9 @@ const AlignmentPills: React.FC<{
   cues: CueMap;
   fadeOut: number;
   colW: ColW;
-}> = ({ textCell, numberCell, frame, cues, fadeOut, colW }) => {
+  reel: Reel;
+  ins: Insert;
+}> = ({ textCell, numberCell, frame, cues, fadeOut, colW, reel, ins }) => {
   const t = cellBox(textCell, colW);
   const n = cellBox(numberCell, colW);
   const p = eOut(progress(cues.showAlignment, frame)) * (1 - fadeOut);
@@ -552,11 +703,15 @@ const AlignmentPills: React.FC<{
     color: '#fff',
   };
 
-  // Pills sit in column C, in line with their rows. Column C is empty by
-  // schema (only A and B carry data); left of the card there is no room
-  // (46px) and inside A/B they covered values. Row alignment does the
-  // pointing: row 2 ↔ TEXT, row 8 ↔ NUMBER.
-  const colC = (ref: string) => cellBox(`C${/\d+$/.exec(ref)![0]}`, colW).x + 16;
+  // Pills sit in the marks column, in line with their rows. That column holds
+  // no data by schema; left of the card there is no room (46px) and inside the
+  // data columns they covered values. Row alignment does the pointing:
+  // row 2 ↔ TEXT, row 8 ↔ NUMBER.
+  const mark = marksColumn(reel);
+  const colC = (ref: string) => {
+    const at = `${mark}${/\d+$/.exec(ref)![0]}`;
+    return cellBox(at, colW).x + shift(ins, at).dx + 16;
+  };
   return (
     <>
       <div

@@ -1,0 +1,115 @@
+{
+  "id": "006",
+  "slug": "vlookup-column-insert",
+  "title": "VLOOKUP pulls the wrong column after someone inserts one",
+  "hook": {
+    "lead": "OPS",
+    "body": "where 12,480.00\nwas yesterday"
+  },
+  "payoff": {
+    "headline": "VLOOKUP COUNTS\nCOLUMNS",
+    "sub": "Insert one column and column two is suddenly a different column. XLOOKUP points at the one you meant."
+  },
+  "sheet": {
+    "rows": [
+      { "n": 1, "a": "Account", "b": "Dept", "c": "Amount", "hdr": true, "group": "top" },
+      { "n": 2, "a": "4010", "b": "OPS", "c": "12,480.00", "group": "top" },
+      { "n": 3, "a": "5200", "b": "ADMIN", "c": "3,175.50", "group": "top" },
+      { "n": 4, "a": "6100", "b": "SALES", "c": "8,940.25", "group": "top" },
+      { "n": 5, "a": "", "b": "", "c": "", "group": "none" },
+      { "n": 6, "a": "", "b": "", "c": "", "group": "none" },
+      { "n": 7, "a": "Account", "b": "", "c": "Pulled", "hdr": true, "group": "bottom" },
+      { "n": 8, "a": "4010", "b": "", "c": "", "group": "bottom" },
+      { "n": 9, "a": "5200", "b": "", "c": "", "group": "bottom" },
+      { "n": 10, "a": "6100", "b": "", "c": "", "group": "bottom" }
+    ],
+    "target": "C8",
+    "fillDown": { "9": "3,175.50", "10": "8,940.25" },
+    "mutation": { "kind": "insertColumn", "at": "B" }
+  },
+  "formulas": {
+    "before": {
+      "cell": "C8",
+      "text": "=VLOOKUP(A8,$A$2:$B$4,2,FALSE)",
+      "textAfter": "=VLOOKUP(A8,$A$2:$C$4,2,FALSE)",
+      "expectedInitial": "12,480.00",
+      "expected": "OPS",
+      "isError": false
+    },
+    "after": {
+      "cell": "C8",
+      "text": "=XLOOKUP(A8,$A$2:$A$4,$C$2:$C$4)",
+      "expected": "12,480.00",
+      "isError": false
+    }
+  },
+  "script": [
+    {
+      "cue": "hook",
+      "vo": "Your lookup came back with a department code this morning. Nobody touched the formula."
+    },
+    {
+      "cue": "revealTop",
+      "vo": "Account codes on the left, amounts beside them.",
+      "caption": "Account codes and\nthe amounts."
+    },
+    {
+      "cue": "revealBottom",
+      "vo": "Down here the summary pulls each amount across.",
+      "caption": "The summary pulls\neach amount."
+    },
+    {
+      "cue": "typeFormula",
+      "vo": "Plain VLOOKUP, column two.",
+      "caption": "Plain VLOOKUP,\ncolumn two."
+    },
+    {
+      "cue": "showInitial",
+      "vo": "12,480.00. Right answer, and it stayed right for months.",
+      "caption": "Right answer.\nFor months."
+    },
+    {
+      "cue": "insertColumn",
+      "vo": "Then somebody adds a department column in the middle.",
+      "caption": "Somebody inserts\na column."
+    },
+    {
+      "cue": "showError",
+      "vo": "Now you get OPS. Excel stretched the range for you, and left the two alone.",
+      "caption": "Now you get OPS."
+    },
+    {
+      "cue": "markError",
+      "vo": "Column two used to be the amount. Column two is the department now.",
+      "caption": "Column two moved."
+    },
+    {
+      "vo": "VLOOKUP counts columns. It has no idea which one you meant.",
+      "caption": "It counts. It doesn't\nknow what you meant."
+    },
+    {
+      "cue": "typeFix",
+      "vo": "So point at the column instead. XLOOKUP takes the account column and the amount column.",
+      "caption": "Point at the column\ninstead."
+    },
+    {
+      "cue": "showResult",
+      "vo": "Same answer, and it survives the next insert.",
+      "caption": "It survives the\nnext insert."
+    },
+    {
+      "cue": "fillDown",
+      "vo": "Fill it down and the summary ties out.",
+      "caption": "Fill down. It ties out."
+    },
+    {
+      "cue": "payoff",
+      "vo": "Any formula that counts columns is one insert away from quietly lying to you."
+    }
+  ],
+  "post": {
+    "title": "VLOOKUP returns the wrong column after inserting a column",
+    "description": "vlookup returns wrong value after inserting a column in excel\nVLOOKUP's column number is a count, not a reference, so an inserted column silently shifts what column two means. XLOOKUP points at the actual column and survives the insert.",
+    "hashtags": ["excel", "accounting", "exceltips", "vlookup", "xlookup"]
+  }
+}

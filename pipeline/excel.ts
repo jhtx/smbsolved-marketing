@@ -15,10 +15,31 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { Reel } from '../src/reel/schema';
+import { DATA_KEYS, initialDataKeys, initialRef, initialRows, insertedColumn, insertedRow } from '../src/reel/sheet';
 
 export type ExcelCell = { ref: string; value: string; kind: 'text' | 'number' };
 export type ExcelFormula = { key: string; cell: string; text: string; numberFormat?: string };
-export type ExcelJob = { cells: ExcelCell[]; formulas: ExcelFormula[] };
+/**
+ * The sheet change a mutation reel makes, performed by Excel itself between
+ * the two calculation passes. Excel — not us — decides what an inserted column
+ * does to a formula that spans it, which is the entire lesson of that family
+ * of reels, so we ask it rather than predicting it.
+ */
+export type ExcelMutation = {
+  kind: 'insertColumn' | 'insertRow';
+  /** column letter, or row number as a string */
+  at: string;
+  /** what goes into the newcomer once Excel has made room for it */
+  cells: ExcelCell[];
+};
+export type ExcelJob = {
+  cells: ExcelCell[];
+  formulas: ExcelFormula[];
+  /** applied after `formulas` are calculated; `formulasAfter` then run */
+  mutation?: ExcelMutation;
+  /** calculated after the mutation. Keys are separate from `formulas`. */
+  formulasAfter?: ExcelFormula[];
+};
 
 export type ExcelResult = {
   key: string;
@@ -38,28 +59,93 @@ export type ExcelReport = { excel: string; results: ExcelResult[] };
 
 const SCRIPT = resolve(import.meta.dirname ?? __dirname, 'excel', 'recalc.ps1');
 
-/** Maps a reel's sheet + formulas onto a recalculation job. */
-export function jobFromReel(reel: Reel): ExcelJob {
-  const cells: ExcelCell[] = [];
-  const isNumeric = (s: string) => s.trim() !== '' && Number.isFinite(Number(s));
+const isNumeric = (s: string) => s.trim() !== '' && Number.isFinite(Number(s));
 
-  for (const r of reel.sheet.rows) {
-    // Column A: alignment IS the lesson. `right` means Excel holds a number;
-    // otherwise the digits are text, the way a GL export delivers them.
-    if (r.a) cells.push({ ref: `A${r.n}`, value: r.a, kind: r.right && isNumeric(r.a) ? 'number' : 'text' });
-    // Column B: amounts are numbers, everything else is text.
-    if (r.b) cells.push({ ref: `B${r.n}`, value: r.b, kind: isNumeric(r.b) ? 'number' : 'text' });
+/**
+ * How a cell's value is stored. Column A carries the alignment lesson: `right`
+ * means Excel holds a real number, otherwise the digits are text, the way a GL
+ * export delivers them. Every other column stores numbers as numbers.
+ */
+const kindFor = (key: string, value: string, right: boolean): 'text' | 'number' =>
+  key === 'a' ? (right && isNumeric(value) ? 'number' : 'text') : isNumeric(value) ? 'number' : 'text';
+
+/**
+ * Maps a reel's sheet + formulas onto a recalculation job.
+ *
+ * A plain reel is one pass: write the cells, run both formulas, report.
+ *
+ * A mutation reel is two. Pass one builds the sheet as it was BEFORE the
+ * insert — the newcomer column or row simply left out, everything after it
+ * pulled back a position — and runs the `before` formula there, which is the
+ * value the viewer sees working at `showInitial`. Then Excel performs the real
+ * insert, the newcomer's values go in, and pass two reads the same cell again
+ * (Excel has rewritten the formula by now, and what it rewrote it to is what
+ * the reel must show) plus the fix.
+ */
+export function jobFromReel(reel: Reel): ExcelJob {
+  const mutation = reel.sheet.mutation;
+  const before = reel.formulas.before;
+  const after = reel.formulas.after;
+
+  if (!mutation) {
+    const cells: ExcelCell[] = [];
+    for (const r of reel.sheet.rows)
+      for (const key of ['a', 'b'] as const)
+        if (r[key]) cells.push({ ref: `${key.toUpperCase()}${r.n}`, value: r[key], kind: kindFor(key, r[key], r.right) });
+
+    const formulas: ExcelFormula[] = (['before', 'after'] as const).map((key) => ({
+      key,
+      cell: reel.formulas[key].cell,
+      text: reel.formulas[key].text,
+      numberFormat: reel.formulas[key].numberFormat,
+    }));
+    return { cells, formulas };
   }
 
-  const formulas: ExcelFormula[] = (['before', 'after'] as const).map((key) => ({
-    key,
-    cell: reel.formulas[key].cell,
-    text: reel.formulas[key].text,
-    numberFormat: reel.formulas[key].numberFormat,
-  }));
+  // --- pass one: the sheet as it was ---------------------------------------
+  const keys = initialDataKeys(reel);
+  const cells: ExcelCell[] = [];
+  // initialRows() drops the newcomer row and renumbers what sat below it;
+  // initialDataKeys() drops the newcomer column and closes the gap. Between
+  // them, `keys[i]` is the data that renders at column i of the old sheet.
+  for (const r of initialRows(reel))
+    keys.forEach((key, i) => {
+      if (r[key]) cells.push({ ref: `${String.fromCharCode(65 + i)}${r.n}`, value: r[key], kind: kindFor(key, r[key], r.right) });
+    });
 
-  return { cells, formulas };
+  const initialCell = initialRef(reel, before.cell);
+  if (!initialCell) throw new Error(`formulas.before.cell ${before.cell} is the inserted ${mutation.kind === 'insertColumn' ? 'column' : 'row'}`);
+
+  // --- the insert, and what fills the newcomer ------------------------------
+  const newCells: ExcelCell[] = [];
+  if (mutation.kind === 'insertColumn') {
+    const key = DATA_KEYS[mutation.at.charCodeAt(0) - 65];
+    for (const r of reel.sheet.rows)
+      if (r[key]) newCells.push({ ref: `${mutation.at}${r.n}`, value: r[key], kind: kindFor(key, r[key], r.right) });
+  } else {
+    const row = reel.sheet.rows.find((r) => r.n === Number(mutation.at));
+    if (row)
+      DATA_KEYS.slice(0, 2).forEach((key, i) => {
+        if (row[key]) newCells.push({ ref: `${String.fromCharCode(65 + i)}${row.n}`, value: row[key], kind: kindFor(key, row[key], row.right) });
+      });
+  }
+
+  return {
+    cells,
+    // Pass one runs the pre-insert formula where it lived pre-insert.
+    formulas: [{ key: 'initial', cell: initialCell, text: before.text, numberFormat: before.numberFormat }],
+    mutation: { kind: mutation.kind, at: mutation.at, cells: newCells },
+    formulasAfter: [
+      // `before` is NOT retyped: Excel shifted and rewrote it during the
+      // insert, and the readback is what the viewer sees in the formula bar.
+      { key: 'before', cell: before.cell, text: '', numberFormat: before.numberFormat },
+      { key: 'after', cell: after.cell, text: after.text, numberFormat: after.numberFormat },
+    ],
+  };
 }
+
+/** True when the job needs Excel to mutate the sheet mid-run. */
+export const isTwoPass = (job: ExcelJob) => !!job.mutation;
 
 /** Runs the job in Excel. Synchronous; ~2-4s including Excel start-up. */
 export function recalcInExcel(job: ExcelJob): ExcelReport {

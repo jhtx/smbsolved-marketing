@@ -354,3 +354,74 @@ line breaks are legal); the writer prompt (rule 12) says how to encode an
 invisible space (`\u00a0`). NBSP itself stays allowed — it is the lesson.
 Probed in real Excel before fixing: with a genuine NBSP this reel's fix
 returns 4,812.00 and both fill-downs match.
+
+## 2026-08-24 — Schema widening: a reel may mutate its sheet once (insert a column or a row)
+The cue vocabulary could only tell one story: a formula is wrong from the
+first frame. A whole family of real problems is the opposite — the formula
+was right, then someone changed the sheet under it (backlog 003, 006, and the
+XLOOKUP family generally). Widened, deliberately and once:
+
+- New cues, in order: `showInitial` (the formula lands its CORRECT value,
+  plain ink, no tick — it is not a "fix", it is just working), then
+  `insertColumn` / `insertRow` (the newcomer opens and everything after it
+  shifts), then the existing `showError` onward.
+- `sheet.mutation = { kind, at }` names the newcomer. The reel JSON always
+  describes the FINAL sheet; the composition renders the initial state by
+  collapsing the newcomer to zero width/height. One definition, no duplicated
+  data, and the pre-insert state cannot drift from the post-insert one.
+- Column letters and row numbers are POSITIONAL, derived from index, never
+  from the schema key. Inserting a column does not relabel the headers, it
+  moves the data under them — which is exactly what a viewer sees in Excel,
+  and why the target ref in the name box changes B8 → C8 on its own.
+- Rows gained a third data column `c`. A reel with a mutation renders three
+  data columns and moves the audit-mark column to D. Non-mutation reels are
+  byte-identical to before.
+
+The gate got the interesting half. `recalc.ps1` now performs the real
+`Columns(x).Insert()` / `Rows(n).Insert()` in Excel between two calculation
+passes, so three things are verified rather than two: the formula's result in
+the original sheet (`expectedInitial`), its result after the insert
+(`expected`), and the fix (`after.expected`). Excel — not the writer — decides
+what the formula becomes when it is shifted, and `formulas.before.textAfter`
+must equal that readback. That is the whole lesson of 006 made checkable: the
+range grows, the column index does not.
+
+Consequence for 003 (hardcoded SUM range): the insert beat now exists, but the
+honest fix is a structured Table reference, which needs ListObject rendering in
+the composition and in the gate. 003 stays parked on that narrower reason, not
+on the missing insert.
+
+## 2026-08-24 — Auto-posting, on the ✅ reaction (owner's decision, supersedes "no auto-posting in v1")
+The 2026-08-22 entry said auto-posting was not worth the auth pain at three
+reels a week. The owner's call today reverses it: the manual step is the
+bottleneck now, and reels 002/004/005 sat built-and-unposted to prove it.
+
+The approval gesture does not change, its meaning does. ✅ on the Slack message
+used to record "I posted this"; it now means "post this for me". That is the
+authorization for an outward-facing, effectively irreversible action, so it
+stays a deliberate human gesture — nothing posts without it, and there is no
+scheduled auto-approve.
+
+Built in the order CLAUDE.md named: YouTube → Instagram → LinkedIn → TikTok.
+Honest about what each API actually does:
+
+- **YouTube Shorts** — real publish. Data API v3 `videos.insert`, resumable
+  upload, one-time OAuth consent, refresh token in `.env.local`.
+- **Instagram Reels** — real publish. Content Publishing API needs the video at
+  a public HTTPS URL, so the MP4 is attached to a GitHub release on the public
+  `jhtx/smbsolved-marketing` repo (assets live outside git history, so nothing
+  bloats, and it doubles as an off-machine backup). Token needs the
+  `instagram_business_content_publish` scope.
+- **LinkedIn** — real publish, to the founder's personal profile
+  (`w_member_social`), three-call video upload. 60-day token; the poller warns
+  in Slack a week before it expires.
+- **TikTok** — NOT a real publish, and labelled as such. Until the app passes
+  audit, the Content Posting API can only drop an unaudited draft into the
+  app's inbox, so the poller reports "draft pushed, finish in the app" and the
+  Slack checklist keeps the manual line. Do not report it as posted.
+
+Every platform is independent and idempotent: results are recorded per platform
+in `NNN-slug.delivery.json`, a platform that already succeeded is never retried,
+and one platform failing never blocks the others. Failures reply in the reel's
+own Slack thread. Reels delivered before this shipped have no delivery record
+and are therefore invisible to the poller — they cannot be double-posted.

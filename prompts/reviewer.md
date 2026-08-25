@@ -55,6 +55,16 @@ block. You are checking the words and the judgment around them.
     minor. Pronunciation is NOT your problem: `#N/A` and function names are
     written literally and the pipeline speaks them ("N A", "sum ifs").
 
+13. **Insert reels.** When the reel has `sheet.mutation`, three extra things
+    have to hold. The `revealTop` narration must describe the sheet as it is
+    *before* the insert, with no mention of the column or row that has not
+    arrived yet. The premise must be that the formula genuinely worked (a
+    reel where it was broken all along is a different, weaker reel). And the
+    explanation must say why the insert broke it in a way that is true of
+    Excel: ranges stretch, index numbers do not. The gate already confirmed
+    the numbers and the rewritten formula, so do not re-derive those; check
+    that the words match what the viewer will see happen.
+
 ## Severity
 
 - `blocking`: a false claim, a missing version caveat the viewer will hit, two

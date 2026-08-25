@@ -3,7 +3,15 @@
 # Invoked by pipeline/excel.ts. Reads a job file:
 #   {
 #     "cells":    [ { "ref": "A2", "value": "1042", "kind": "text" | "number" }, ... ],
-#     "formulas": [ { "key": "before", "cell": "B2", "text": "=VLOOKUP(...)", "numberFormat": "General" }, ... ]
+#     "formulas": [ { "key": "before", "cell": "B2", "text": "=VLOOKUP(...)", "numberFormat": "General" }, ... ],
+#
+#     // optional, mutation reels only: Excel inserts a column or a row AFTER
+#     // "formulas" have been calculated, fills the newcomer, then calculates
+#     // "formulasAfter". A formula with an empty "text" is not retyped: the
+#     // insert shifted and rewrote it, and reading back what Excel made of it
+#     // is the entire point (VLOOKUP's range grows, its column index does not).
+#     "mutation":      { "kind": "insertColumn", "at": "B", "cells": [ ... ] },
+#     "formulasAfter": [ { "key": "before", "cell": "C8", "text": "" }, ... ]
 #   }
 # Writes JSON to stdout:
 #   { "excel": "16.0.20326", "results": [ { key, cell, text, value, isError, errCode, formulaReadback, setError } ] }
@@ -37,35 +45,45 @@ try {
   # Wide columns so .Text never degrades to ####.
   $ws.Columns.ColumnWidth = 60
 
-  foreach ($c in $job.cells) {
-    $r = $ws.Range($c.ref)
-    if ($c.kind -eq 'text') {
-      $r.NumberFormat = '@'          # like a GL export: digits stored as text
-      $r.Value2 = [string]$c.value
-    } else {
-      $r.NumberFormat = 'General'
-      $num = 0.0
-      if ([double]::TryParse([string]$c.value, [ref]$num)) { $r.Value2 = $num } else { $r.Value2 = [string]$c.value }
+  function Write-Cells($cells) {
+    foreach ($c in $cells) {
+      $r = $ws.Range($c.ref)
+      if ($c.kind -eq 'text') {
+        $r.NumberFormat = '@'          # like a GL export: digits stored as text
+        $r.Value2 = [string]$c.value
+      } else {
+        $r.NumberFormat = 'General'
+        $num = 0.0
+        if ([double]::TryParse([string]$c.value, [ref]$num)) { $r.Value2 = $num } else { $r.Value2 = [string]$c.value }
+      }
     }
   }
 
-  foreach ($f in $job.formulas) {
+  # Calculates one formula and reports what Excel shows. An empty $f.text means
+  # the cell already holds a formula (Excel rewrote it during an insert) and
+  # must be read, not retyped.
+  function Invoke-Formula($f) {
     $r = $ws.Range($f.cell)
     $res = [ordered]@{
       key = $f.key; cell = $f.cell; text = $null; value = $null
       isError = $false; errCode = $null; formulaReadback = $null; setError = $null
     }
-    $r.ClearContents() | Out-Null
-    $fmt = if ($f.numberFormat) { [string]$f.numberFormat } else { 'General' }
-    $r.NumberFormat = $fmt
-    try {
-      $r.Formula2 = [string]$f.text
-    } catch {
-      $res.setError = ($_.Exception.Message -split "`n")[0].Trim()
-      $out.results += $res
-      continue
+    $typed = [string]$f.text
+    if ($typed.Length -gt 0) {
+      $r.ClearContents() | Out-Null
+      $fmt = if ($f.numberFormat) { [string]$f.numberFormat } else { 'General' }
+      $r.NumberFormat = $fmt
+      try {
+        $r.Formula2 = $typed
+      } catch {
+        $res.setError = ($_.Exception.Message -split "`n")[0].Trim()
+        return $res
+      }
+    } elseif (-not $r.HasFormula) {
+      $res.setError = "$($f.cell) holds no formula after the insert"
+      return $res
     }
-    $xl.Calculate()
+    $xl.Calculate() | Out-Null
     $v = $r.Value2
     $res.formulaReadback = [string]$r.Formula2
     $res.text = [string]$r.Text
@@ -81,7 +99,24 @@ try {
     } else {
       $res.value = [string]$v
     }
-    $out.results += $res
+    return $res
+  }
+
+  Write-Cells $job.cells
+  foreach ($f in $job.formulas) { $out.results += (Invoke-Formula $f) }
+
+  # --- the mutation, performed by Excel itself -------------------------------
+  # Everything that makes an insert interesting (which ranges stretch, which
+  # indexes stubbornly do not) is Excel's behaviour, so Excel does it.
+  if ($job.mutation) {
+    if ($job.mutation.kind -eq 'insertColumn') {
+      $ws.Columns($job.mutation.at).Insert() | Out-Null
+    } else {
+      $ws.Rows([int]$job.mutation.at).Insert() | Out-Null
+    }
+    Write-Cells $job.mutation.cells
+    $xl.Calculate() | Out-Null
+    foreach ($f in $job.formulasAfter) { $out.results += (Invoke-Formula $f) }
   }
 }
 finally {

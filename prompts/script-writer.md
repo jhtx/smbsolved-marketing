@@ -50,6 +50,49 @@ losing time to something specific. Assume they know what VLOOKUP is.
     `"Cintas\u00a0Corporation"`. Nothing else. `\b`, `\f`, `\t` are control
     characters, not invisible spaces, and the gate rejects them.
 
+## Reels where the sheet changes under the formula
+
+Most reels show a formula that was wrong from the first frame. Some topics are
+the opposite: the formula was right for months, and then somebody inserted a
+column or a row and it quietly started lying. Write one of those by adding
+`sheet.mutation` and using three extra cues.
+
+```
+"sheet": {
+  "rows": [ ... the sheet AFTER the insert, including the new column ... ],
+  "target": "C8",
+  "mutation": { "kind": "insertColumn", "at": "B" }
+}
+```
+
+Rules for these, and they are exact:
+
+- **`rows` always describes the sheet after the insert.** `at` names the
+  newcomer. The renderer collapses it and reopens it on the cue; the gate
+  builds the old sheet by taking it back out. Never describe the sheet twice.
+- **`sheet.target` and both `formulas.*.cell` are in the AFTER coordinates.**
+  If the formula sat in B8 and a column is inserted at B, the target is `C8`.
+- **`formulas.before.text` is in the BEFORE coordinates**, because that is
+  what the viewer typed before anything moved: `=VLOOKUP(A8,$A$2:$B$4,2,FALSE)`.
+- **`formulas.before.expectedInitial`** is what that formula displayed back
+  when it was right. **`formulas.before.expected`** is what it displays after
+  the insert, and the two must differ or there is no lesson.
+- **`formulas.before.textAfter`** is the formula as *Excel* rewrites it during
+  the insert, in AFTER coordinates. Excel stretches ranges and leaves index
+  numbers alone, so `$A$2:$B$4` becomes `$A$2:$C$4` while the `2` does not
+  move. The gate compares this against what Excel actually stored, so do not
+  guess: state the rule and let it be checked.
+- **`formulas.after.text`** is the fix, in AFTER coordinates.
+- Cue order: `typeFormula`, `showInitial` (the correct value lands, plain),
+  `insertColumn` or `insertRow`, then `showError` as usual.
+- Three data columns is the ceiling, and they are tight. Keep column text
+  short: account codes, department codes, short labels.
+- The narration at `revealTop` describes the sheet *before* the insert. Do not
+  mention the new column until it arrives.
+
+A row insert works the same way, with `"kind": "insertRow", "at": "10"` and
+row numbers in place of column letters.
+
 ## The hook
 
 The first line is the whole reel. It must name a moment the viewer has

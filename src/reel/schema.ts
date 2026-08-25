@@ -5,6 +5,12 @@ export const CUES = [
   'revealTop',
   'revealBottom',
   'typeFormula',
+  /** the formula lands its CORRECT value, plain ink. mutation reels only */
+  'showInitial',
+  /** the newcomer column opens and everything after it shifts right */
+  'insertColumn',
+  /** the newcomer row opens and everything below it shifts down */
+  'insertRow',
   'showError',
   'markError',
   'showAlignment',
@@ -26,6 +32,12 @@ export const rowSchema = z.object({
   hdr: z.boolean().default(false),
   /** right-align column A. this is the whole point of reel 001 — alignment carries meaning */
   right: z.boolean().default(false),
+  /**
+   * third data column. Only reels with `sheet.mutation` render it; for every
+   * other reel the column after B is where the audit tick and the
+   * TEXT / NUMBER pills live, and this stays empty.
+   */
+  c: z.string().default(''),
   /** which stagger group this row reveals with */
   group: z.enum(['top', 'bottom', 'none']).default('top'),
 });
@@ -60,6 +72,20 @@ export const formulaSchema = z.object({
   isError: z.boolean().default(false),
   /** Excel number format applied to the cell, e.g. "m/d/yyyy" or "#,##0.00". Default General. */
   numberFormat: z.string().optional(),
+
+  /**
+   * Mutation reels, `before` only: what this formula DISPLAYS in the original
+   * sheet, before the insert. This is the value the viewer sees at
+   * `showInitial` — the formula working, which is what makes the break land.
+   */
+  expectedInitial: z.string().optional(),
+  /**
+   * Mutation reels, `before` only: the formula text after Excel rewrote it on
+   * insert. Excel decides this, not the writer; the gate compares it to what
+   * Excel actually stored. For 006 it is the whole lesson — the range grows
+   * (`$B$4` becomes `$C$4`) and the column index does not.
+   */
+  textAfter: z.string().optional(),
 });
 
 export const reelSchema = z.object({
@@ -91,6 +117,25 @@ export const reelSchema = z.object({
      */
     alignment: z
       .object({ textCell: z.string(), numberCell: z.string() })
+      .optional(),
+    /**
+     * The one sheet change a reel may make, mid-reel. `rows` above always
+     * describes the sheet AFTER it; `at` names the newcomer, which the
+     * composition collapses to nothing until the insert cue fires and the
+     * gate omits from its first calculation pass.
+     *
+     *   insertColumn — `at` is a column letter, "B" or "C"
+     *   insertRow    — `at` is a row number as a string, "10"
+     *
+     * Column letters and row numbers on screen are positional: inserting
+     * column B does not relabel the headers, it shifts the data under them,
+     * so the target moves B8 → C8 by itself. See DECISIONS.md 2026-08-24.
+     */
+    mutation: z
+      .object({
+        kind: z.enum(['insertColumn', 'insertRow']),
+        at: z.string().regex(/^([A-C]|\d{1,2})$/),
+      })
       .optional(),
   }),
 

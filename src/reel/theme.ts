@@ -38,40 +38,88 @@ export const GEO = {
   headH: 44,
   rowH: 60,
   rhW: 62,
-  colW: { A: 190, B: 470, C: 238 },
+  colW: { A: 190, B: 470, C: 238, D: 0 },
 } as const;
 
-export type ColW = { A: number; B: number; C: number };
+export type ColW = { A: number; B: number; C: number; D: number };
+
+/**
+ * The audit tick and the TEXT / NUMBER pills need a column of their own, past
+ * the data. Fixed width: the marks are sized to the value they point at, not
+ * to the column.
+ */
+const MARKS_W = 190;
 
 /**
  * Column widths sized to the reel's content, so a 20-character vendor name is
  * never clipped (the clipped part is often the lesson — a trailing space).
- * Column C stays fixed: the audit tick and the TEXT/NUMBER pills live there.
+ * The marks column stays fixed: the audit tick and the TEXT/NUMBER pills live
+ * there. It is C for a normal reel and D once a column has been inserted.
  * ~15.4px per character at the 30px sheet font, plus cell padding.
  */
-export function colWidthsFor(reel: {
-  sheet: { rows: { a: string; b: string }[]; fillDown: Record<string, string> };
-  formulas: { before: { expected: string }; after: { expected: string } };
-}): ColW {
+export function colWidthsFor(reel: WidthInput): ColW {
   const CH = 15.4;
   const PAD = 36;
   const total = GEO.cardW - GEO.rhW; // 898
-  const C = 190;
 
-  const aMax = Math.max(4, ...reel.sheet.rows.map((r) => r.a.length));
-  const bMax = Math.max(
-    5,
-    ...reel.sheet.rows.map((r) => r.b.length),
+  // Values that land in the LAST data column: the formula result and whatever
+  // fills down under it. They have to fit or the lesson is clipped.
+  const valueChars = [
     ...Object.values(reel.sheet.fillDown).map((s) => s.length),
     reel.formulas.before.expected.length,
+    reel.formulas.before.expectedInitial?.length ?? 0,
     reel.formulas.after.expected.length,
-  );
+  ];
 
-  let A = Math.min(430, Math.max(170, Math.round(aMax * CH + PAD)));
-  const bNeed = Math.min(560, Math.max(220, Math.round(bMax * CH + PAD)));
-  if (total - C - A < bNeed) A = Math.max(170, total - C - bNeed);
-  return { A, B: total - C - A, C };
+  // Two data columns: the original arithmetic, untouched, so every reel
+  // written before the schema widened renders exactly as it did.
+  if (reel.sheet.mutation?.kind !== 'insertColumn') {
+    const C = MARKS_W;
+    const aMax = Math.max(4, ...reel.sheet.rows.map((r) => r.a.length));
+    const bMax = Math.max(5, ...reel.sheet.rows.map((r) => r.b.length), ...valueChars);
+
+    let A = Math.min(430, Math.max(170, Math.round(aMax * CH + PAD)));
+    const bNeed = Math.min(560, Math.max(220, Math.round(bMax * CH + PAD)));
+    if (total - C - A < bNeed) A = Math.max(170, total - C - bNeed);
+    return { A, B: total - C - A, C, D: 0 };
+  }
+
+  // Three data columns (a column gets inserted mid-reel). Size each to its
+  // content, shrink proportionally if they overflow, and give any slack to
+  // the value column.
+  const avail = total - MARKS_W;
+  const MIN = 128;
+  const chars = [
+    Math.max(4, ...reel.sheet.rows.map((r) => r.a.length)),
+    Math.max(4, ...reel.sheet.rows.map((r) => r.b.length)),
+    Math.max(5, ...reel.sheet.rows.map((r) => r.c.length), ...valueChars),
+  ];
+  let w = chars.map((n) => Math.max(MIN, Math.round(n * CH + PAD)));
+  const sum = w[0] + w[1] + w[2];
+  if (sum > avail) {
+    // Squeeze the two label columns first; the value column carries the number.
+    const over = sum - avail;
+    const slack = w[0] - MIN + (w[1] - MIN);
+    const take = (i: number) => (slack > 0 ? Math.round((over * (w[i] - MIN)) / slack) : 0);
+    w = [w[0] - take(0), w[1] - take(1), w[2]];
+    w[2] = avail - w[0] - w[1];
+  } else {
+    w[2] += avail - sum;
+  }
+  return { A: w[0], B: w[1], C: w[2], D: MARKS_W };
 }
+
+type WidthInput = {
+  sheet: {
+    rows: { a: string; b: string; c: string }[];
+    fillDown: Record<string, string>;
+    mutation?: { kind: 'insertColumn' | 'insertRow'; at: string } | undefined;
+  };
+  formulas: {
+    before: { expected: string; expectedInitial?: string | undefined };
+    after: { expected: string };
+  };
+};
 
 /** Absolute stage position of a cell, e.g. cellBox('B2', colW). */
 export function cellBox(ref: string, colW: ColW = GEO.colW) {
@@ -80,7 +128,7 @@ export function cellBox(ref: string, colW: ColW = GEO.colW) {
   const [, col, rowStr] = m;
   const row = Number(rowStr);
 
-  const order = ['A', 'B', 'C'] as const;
+  const order = ['A', 'B', 'C', 'D'] as const;
   const i = order.indexOf(col as (typeof order)[number]);
   if (i < 0) throw new Error(`column ${col} is not rendered`);
 

@@ -92,6 +92,9 @@ Valid cues, in the order they normally appear:
 | `revealTop` | rows 1-4 stagger in |
 | `revealBottom` | rows 7-10 stagger in |
 | `typeFormula` | formula types into the bar, char by char |
+| `showInitial` | the formula lands its CORRECT value, plain ink, no tick |
+| `insertColumn` | a new column opens and everything after it shifts right |
+| `insertRow` | a new row opens and everything below it shifts down |
 | `showError` | result lands in the target cell, shake, red |
 | `markError` | red audit circle strokes on |
 | `showAlignment` | TEXT / NUMBER pills appear in column C beside the two cells |
@@ -101,9 +104,20 @@ Valid cues, in the order they normally appear:
 | `payoff` | full-bleed overlay, the takeaway |
 
 Not every reel uses every cue. Order must not be shuffled. The cue vocabulary
-is the current ceiling of what a reel can show; widening it (row/column
-insertion, multi-column sheets, a second formula cell) is a schema change —
-log it in `DECISIONS.md` first.
+is the current ceiling of what a reel can show; widening it (a second formula
+cell, a Table / structured reference, more than one sheet change) is a schema
+change — log it in `DECISIONS.md` first.
+
+`showInitial` / `insertColumn` / `insertRow` only exist together with
+`sheet.mutation`, which is the one sheet change a reel may make. The JSON
+always describes the sheet AFTER the insert and `mutation.at` names the
+newcomer; the renderer collapses it until its cue and the gate takes it back
+out to compute the "before" state. Column letters and row numbers on screen
+are positional, so an inserted column moves the target from B8 to C8 by
+itself. Three verification points instead of two: the formula working in the
+original sheet, the same formula after Excel performed the real insert (Excel
+decides how it gets rewritten, and `formulas.before.textAfter` must match what
+Excel stored), and the fix. Details in `DECISIONS.md` 2026-08-24.
 
 ---
 
@@ -112,6 +126,9 @@ log it in `DECISIONS.md` first.
 Locked. Changing any of this breaks recognizability across the channel.
 
 - **Ledger green background** (`--ledger`), warm paper sheet, dark ink.
+- Two data columns, or three on a reel that inserts one. The column right of
+  the data belongs to the audit marks and the TEXT / NUMBER pills, and never
+  holds data.
 - **The sheet must be unmistakably Excel**: name box, `fx`, formula bar,
   column letters, row numbers, real error strings. Authenticity with
   accountants rides on this.
