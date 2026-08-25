@@ -13,7 +13,8 @@
  *   add --no-excel-loop to stop after the first verified-or-not attempt
  */
 import './env';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import type Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { CUES, reelSchema, type Reel } from '../src/reel/schema';
@@ -31,6 +32,8 @@ const wRow = z.object({
   n: z.number(),
   a: z.string(),
   b: z.string(),
+  /** third data column; only a reel that inserts a column renders it */
+  c: z.string(),
   hdr: z.boolean(),
   /** true = Excel holds a NUMBER in column A (renders right-aligned). false = text. */
   right: z.boolean(),
@@ -42,6 +45,10 @@ const wFormula = z.object({
   expected: z.string(),
   isError: z.boolean(),
   numberFormat: z.string().nullable(),
+  /** insert reels, `before` only: what it displayed before the insert */
+  expectedInitial: z.string().nullable(),
+  /** insert reels, `before` only: the formula as Excel rewrites it */
+  textAfter: z.string().nullable(),
 });
 const wLine = z.object({
   vo: z.string(),
@@ -59,6 +66,10 @@ export const writerSchema = z.object({
     rows: z.array(wRow),
     fillDown: z.array(z.object({ row: z.number(), value: z.string() })),
     alignment: z.object({ textCell: z.string(), numberCell: z.string() }).nullable(),
+    /** the one sheet change a reel may make; null for most reels */
+    mutation: z
+      .object({ kind: z.enum(['insertColumn', 'insertRow']), at: z.string() })
+      .nullable(),
   }),
   formulas: z.object({ before: wFormula, after: wFormula }),
   script: z.array(wLine),
@@ -85,6 +96,7 @@ function toReel(w: WriterOut): unknown {
       rows: w.sheet.rows,
       fillDown: Object.fromEntries(w.sheet.fillDown.map((f) => [String(f.row), f.value])),
       ...(w.sheet.alignment ? { alignment: w.sheet.alignment } : {}),
+      ...(w.sheet.mutation ? { mutation: w.sheet.mutation } : {}),
     },
     formulas: { before: strip(w.formulas.before), after: strip(w.formulas.after) },
     script: w.script.map((l) => strip(l)),
@@ -135,11 +147,12 @@ function systemPrompt(): string {
     `- \`id\`: three digits, given to you. \`slug\`: lowercase-hyphenated, 2–5 words.`,
     `- \`hook.lead\`: the oversized red line on the hook card — usually the error value or the wrong number (≤7 characters). \`hook.body\`: the turn, ≤10 words, \`\\n\` for the line break.`,
     `- \`payoff.headline\`: 2–3 short lines, uppercase on screen; \`payoff.sub\`: one sentence.`,
-    `- \`sheet.rows\`: 6–10 rows, \`n\` = Excel row number starting at 1. Only columns A and B carry data. \`hdr\` = bold header row. \`right: true\` means Excel holds a NUMBER in column A (it renders right-aligned); \`right: false\` means the digits are TEXT, the way a GL export delivers them. Column B numbers are always numbers. \`group\`: \`top\` rows reveal first, \`bottom\` rows reveal on \`revealBottom\`, \`none\` for blank spacer rows.`,
-    `- \`sheet.target\`: the ONE cell (column B) where the formula lives and the audit marks attach. \`formulas.before.cell\` and \`after.cell\` must equal it.`,
+    `- \`sheet.rows\`: 6–10 rows, \`n\` = Excel row number starting at 1. Columns A and B carry data; \`c\` stays empty unless this reel inserts a column, in which case A, B and C all carry data. \`hdr\` = bold header row. \`right: true\` means Excel holds a NUMBER in column A (it renders right-aligned); \`right: false\` means the digits are TEXT, the way a GL export delivers them. Column B numbers are always numbers. \`group\`: \`top\` rows reveal first, \`bottom\` rows reveal on \`revealBottom\`, \`none\` for blank spacer rows.`,
+    `- \`sheet.target\`: the ONE cell where the formula lives and the audit marks attach, in the LAST data column (B normally, C on an insert-a-column reel, and written in the coordinates AFTER the insert). \`formulas.before.cell\` and \`after.cell\` must equal it.`,
     `- \`sheet.fillDown\`: rows that populate on the \`fillDown\` cue, with the value each shows. Empty array if the reel has no fill-down.`,
     `- \`sheet.alignment\`: only for the text-vs-number concept (cells the TEXT / NUMBER pills point at). null otherwise.`,
-    `- \`formulas.*.text\`: the exact formula, starting with \`=\`, referencing only rendered rows. \`expected\`: exactly what the cell DISPLAYS in Excel after calculation — error values verbatim (\`#N/A\`, \`#VALUE!\`); numbers as General format shows them (\`4250\`) unless you set \`numberFormat\` (e.g. \`"#,##0.00"\` → \`4,250.00\`, \`"m/d/yyyy"\` → \`3/15/2026\`). \`isError\`: true only for Excel error values.`,
+    `- \`sheet.mutation\`: null for most reels. Set it only for the "it worked until somebody changed the sheet" family: \`{ kind: "insertColumn", at: "B" }\` or \`{ kind: "insertRow", at: "10" }\`. \`rows\` then describes the sheet AFTER the insert and \`at\` names the newcomer. With it you must use the \`showInitial\` cue and the matching \`insertColumn\`/\`insertRow\` cue, and fill \`formulas.before.expectedInitial\` (what the formula displayed before the insert) and \`formulas.before.textAfter\` (the formula as EXCEL rewrites it during the insert: ranges stretch, index numbers do not). \`before.text\` is written in the coordinates BEFORE the insert; everything else uses the coordinates after it. Excel checks all three.`,
+    `- \`formulas.*.text\`: the exact formula, starting with \`=\`, referencing only rendered rows. \`expected\`: exactly what the cell DISPLAYS in Excel after calculation — error values verbatim (\`#N/A\`, \`#VALUE!\`); numbers as General format shows them (\`4250\`) unless you set \`numberFormat\` (e.g. \`"#,##0.00"\` → \`4,250.00\`, \`"m/d/yyyy"\` → \`3/15/2026\`). \`isError\`: true only for Excel error values. \`expectedInitial\` and \`textAfter\` are null unless \`sheet.mutation\` is set.`,
     `- \`script\`: 8–12 lines. \`vo\` is spoken (spell symbols phonetically: "N slash A", "hash value"); \`caption\` is on screen (real symbols, \`\\n\` line break, max 2 lines, **${CAPTION.maxCharsPerLine} characters per line**, \`*asterisks*\` once per reel), null to reuse vo. \`cue\`: one of ${CUES.join(', ')} in that order, each at most once; \`hook\` and \`payoff\` required; \`showAlignment\` only if \`sheet.alignment\` is set; \`fillDown\` only if \`sheet.fillDown\` is non-empty. Lines with no cue are allowed.`,
     `- \`post\`: \`title\` ≤70 chars; \`description\` whose first line is the search phrase an accountant would type, then one plain sentence, no CTA beyond "save this"; \`hashtags\` ≤5 topical (#excel #accounting …), no # in the strings.`,
     '\n---\n# A complete reel, for STRUCTURE only (do not copy its content, data, or phrasing)\n',
@@ -263,10 +276,29 @@ export async function writeReel(opts: {
     }
 
     markDone(reel.id);
+    dropEarlierSlugs(reel.id, lastPath);
     return { path: lastPath, reel, costUsd: cost };
   }
 
   return { parked: `reel ${opts.id} did not pass after ${maxLoops} attempts — parked for a human`, costUsd: cost };
+}
+
+/**
+ * Each attempt writes `NNN-slug.json`, and the model is free to rename the
+ * slug as the reel changes shape, so a loop can leave earlier attempts behind
+ * under dead names. Reel 007 left a `007-iferror-missing-name.json` next to
+ * the real `007-iferror-vendor-master.json`. Only the reel that shipped should
+ * be in content/reels, or the next person cannot tell which 007 is the reel.
+ */
+function dropEarlierSlugs(id: string, keep: string) {
+  const keepStem = basename(keep).replace(/\.json$/, '');
+  for (const f of readdirSync('content/reels')) {
+    const m = /^(\d{3})-(.+?)\.(json|review\.json)$/.exec(f);
+    if (!m || m[1] !== id) continue;
+    if (f.startsWith(keepStem)) continue;
+    rmSync(join('content/reels', f), { force: true });
+    console.log(`  removed ${f} (earlier attempt under a different slug)`);
+  }
 }
 
 /* ------------------------------------------------------------------ */
