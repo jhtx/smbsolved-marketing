@@ -8,24 +8,92 @@
   },
   "payoff": {
     "headline": "VLOOKUP COUNTS\nCOLUMNS",
-    "sub": "Insert one column and column two is suddenly a different column. XLOOKUP points at the one you meant."
+    "sub": "Insert one column and column two quietly means something else."
   },
   "sheet": {
     "rows": [
-      { "n": 1, "a": "Account", "b": "Dept", "c": "Amount", "hdr": true, "group": "top" },
-      { "n": 2, "a": "4010", "b": "OPS", "c": "12,480.00", "group": "top" },
-      { "n": 3, "a": "5200", "b": "ADMIN", "c": "3,175.50", "group": "top" },
-      { "n": 4, "a": "6100", "b": "SALES", "c": "8,940.25", "group": "top" },
-      { "n": 5, "a": "", "b": "", "c": "", "group": "none" },
-      { "n": 6, "a": "", "b": "", "c": "", "group": "none" },
-      { "n": 7, "a": "Account", "b": "", "c": "Pulled", "hdr": true, "group": "bottom" },
-      { "n": 8, "a": "4010", "b": "", "c": "", "group": "bottom" },
-      { "n": 9, "a": "5200", "b": "", "c": "", "group": "bottom" },
-      { "n": 10, "a": "6100", "b": "", "c": "", "group": "bottom" }
+      {
+        "n": 1,
+        "a": "Account",
+        "b": "Dept",
+        "c": "Amount",
+        "hdr": true,
+        "group": "top"
+      },
+      {
+        "n": 2,
+        "a": "4010",
+        "b": "OPS",
+        "c": "12,480.00",
+        "group": "top"
+      },
+      {
+        "n": 3,
+        "a": "5200",
+        "b": "ADMIN",
+        "c": "3,175.50",
+        "group": "top"
+      },
+      {
+        "n": 4,
+        "a": "6100",
+        "b": "SALES",
+        "c": "8,940.25",
+        "group": "top"
+      },
+      {
+        "n": 5,
+        "a": "",
+        "b": "",
+        "c": "",
+        "group": "none"
+      },
+      {
+        "n": 6,
+        "a": "",
+        "b": "",
+        "c": "",
+        "group": "none"
+      },
+      {
+        "n": 7,
+        "a": "Account",
+        "b": "",
+        "c": "Pulled",
+        "hdr": true,
+        "group": "bottom"
+      },
+      {
+        "n": 8,
+        "a": "4010",
+        "b": "",
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 9,
+        "a": "5200",
+        "b": "",
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 10,
+        "a": "6100",
+        "b": "",
+        "c": "",
+        "group": "bottom"
+      }
     ],
     "target": "C8",
-    "fillDown": { "9": "3,175.50", "10": "8,940.25" },
-    "mutation": { "kind": "insertColumn", "at": "B" }
+    "fillDown": {
+      "9": "3,175.50",
+      "10": "8,940.25"
+    },
+    "mutation": {
+      "kind": "insertColumn",
+      "at": "B"
+    }
   },
   "formulas": {
     "before": {
@@ -46,7 +114,7 @@
   "script": [
     {
       "cue": "hook",
-      "vo": "Your lookup came back with a department code this morning. Nobody touched the formula."
+      "vo": "Your lookup came back with a department code. Nobody touched the formula."
     },
     {
       "cue": "revealTop",
@@ -75,22 +143,22 @@
     },
     {
       "cue": "showError",
-      "vo": "Now you get OPS. Excel stretched the range for you, and left the two alone.",
+      "vo": "Now you get OPS. Excel stretched the range for you, and the 2 stayed a 2.",
       "caption": "Now you get OPS."
     },
     {
       "cue": "markError",
-      "vo": "Column two used to be the amount. Column two is the department now.",
-      "caption": "Column two moved."
+      "vo": "Column two used to be the amount. Now it's the department.",
+      "caption": "Column two used to be\nthe amount."
     },
     {
-      "vo": "VLOOKUP counts columns. It has no idea which one you meant.",
-      "caption": "It counts. It doesn't\nknow what you meant."
+      "vo": "VLOOKUP counts columns. It can't know which one you meant, so point at the column itself.",
+      "caption": "Point at the column,\ndon't count to it."
     },
     {
       "cue": "typeFix",
-      "vo": "So point at the column instead. XLOOKUP takes the account column and the amount column.",
-      "caption": "Point at the column\ninstead."
+      "vo": "XLOOKUP takes the account column and the amount column, if you're on 365 or 2021.",
+      "caption": "XLOOKUP, if you're\non 365 or 2021."
     },
     {
       "cue": "showResult",
@@ -109,7 +177,18 @@
   ],
   "post": {
     "title": "VLOOKUP returns the wrong column after inserting a column",
-    "description": "vlookup returns wrong value after inserting a column in excel\nVLOOKUP's column number is a count, not a reference, so an inserted column silently shifts what column two means. XLOOKUP points at the actual column and survives the insert.",
-    "hashtags": ["excel", "accounting", "exceltips", "vlookup", "xlookup"]
+    "description": "vlookup returns wrong value after inserting a column in excel\nVLOOKUP's column number is just a count, so an inserted column silently changes what column two means. XLOOKUP names the column you want and survives the insert. Needs Microsoft 365 or Excel 2021.",
+    "hashtags": [
+      "excel",
+      "accounting",
+      "exceltips",
+      "vlookup",
+      "xlookup"
+    ]
+  },
+  "verification": {
+    "excel": "16.0.20326",
+    "on": "2026-08-25",
+    "formulasHash": "6c91db35b8480b09"
   }
 }

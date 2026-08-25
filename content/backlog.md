@@ -23,7 +23,7 @@ Target three to four a week. Keep this list ten deep or the pipeline starves.
       space from the export, TRIM
 - [x] **005** Vendor names match but the lookup still fails → non-breaking
       space (CHAR 160) from a web export, SUBSTITUTE
-- [ ] **006** VLOOKUP breaks every time someone inserts a column →
+- [x] **006** VLOOKUP breaks every time someone inserts a column →
       column index is positional, use XLOOKUP or MATCH
 - [ ] **007** [general] The #N/A error wrecks your whole report → wrap the
       lookup in IFERROR with an empty string
@@ -54,9 +54,10 @@ to keep the weekly mix at one general in three or four.*
 ## Candidates, not yet sharpened
 
 - **003** Your total is off by exactly one row every month → SUM range
-  hardcoded instead of a table reference. *Parked 2026-08-24: the payoff
-  needs a row-insert animation the schema can't express yet. Promote when
-  the beat vocabulary widens (see DECISIONS).*
+  hardcoded instead of a table reference. *Still parked, on a narrower reason
+  since the insert beats shipped 2026-08-24: the row insert is expressible now,
+  but the honest fix is a structured Table reference and nothing renders or
+  verifies a ListObject yet. Promote when that lands (see DECISIONS).*
 - Depreciation schedule where the final year doesn't tie to cost
 - Reconciliation where the difference is divisible by 9 (transposition)
 - Pivot table showing counts instead of sums after a refresh

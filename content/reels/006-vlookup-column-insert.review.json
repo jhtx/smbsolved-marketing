@@ -1,0 +1,69 @@
+{
+  "verdict": "pass",
+  "findings": [
+    {
+      "severity": "minor",
+      "where": "script[] length / runtime",
+      "issue": "Fourteen VO lines, roughly 140 words plus a spoken currency figure. That lands near or just past the 55s ceiling once ElevenLabs reads \"twelve thousand four hundred eighty\" twice.",
+      "fix": "Cut or merge one of the two uncued middle lines (\"VLOOKUP counts columns. It has no idea which one you meant.\" and \"So point at the column itself instead of counting to it.\") so the fix still lands in plain words before typeFix but the reel stays in band."
+    },
+    {
+      "severity": "minor",
+      "where": "payoff.sub",
+      "issue": "Reads as a summary of the reel rather than a line a viewer repeats, and it restates the 365/2021 caveat that already appears in the typeFix VO, the typeFix caption and the description. Fourth mention.",
+      "fix": "Shorten to one sentence and drop the version clause from the payoff, since the caveat is already spoken at the moment the viewer would type the formula."
+    },
+    {
+      "severity": "minor",
+      "where": "captions at insertColumn, showError, markError",
+      "issue": "Three consecutive short subject-verb declaratives of the same shape (\"Somebody inserts a column.\" / \"Now you get OPS.\" / \"Column two moved.\").",
+      "fix": "Reshape one of the three, e.g. make the markError caption a fragment or a comparison so the rhythm breaks."
+    }
+  ],
+  "hook": {
+    "score": 5,
+    "note": "\"OPS where 12,480.00 was yesterday\" is a symptom, not a category. Seven words in the body, a text code sitting where a dollar amount belongs, and the VO line (\"Nobody touched the formula\") names the exact reason this one is maddening. Concrete and personal."
+  },
+  "claims": [
+    {
+      "claim": "Excel stretched the VLOOKUP range when the column was inserted but left the column index at 2",
+      "verdict": "true",
+      "note": "Inserting at B expands $A$2:$B$4 to $A$2:$C$4; col_index_num is a literal and does not adjust. Matches formulas.before.textAfter."
+    },
+    {
+      "claim": "After the insert, column two of the range is the department, not the amount",
+      "verdict": "true",
+      "note": "Post-insert layout is Account / Dept / Amount, so offset 2 is Dept."
+    },
+    {
+      "claim": "VLOOKUP counts columns and has no idea which one you meant",
+      "verdict": "true",
+      "note": "Plain-language but accurate for a hardcoded numeric col_index_num."
+    },
+    {
+      "claim": "XLOOKUP requires Microsoft 365 or Excel 2021",
+      "verdict": "true",
+      "note": "Correct. Caveat is spoken at typeFix, captioned, and repeated in the description, so a 2016/2019 viewer will not hit #NAME? blind."
+    },
+    {
+      "claim": "The XLOOKUP version survives the next insert",
+      "verdict": "true",
+      "note": "Return range $C$2:$C$4 is a real reference, so Excel re-points it when a column is inserted to its left. True as stated."
+    },
+    {
+      "claim": "The formula was correct before the insert and returned 12,480.00",
+      "verdict": "true",
+      "note": "Premise holds; expectedInitial confirms it. revealTop narration describes only Account and Amount and never mentions the Dept column before it arrives."
+    },
+    {
+      "claim": "Data realism (accounts 4010/5200/6100, OPS/ADMIN/SALES, 12,480.00 / 3,175.50 / 8,940.25)",
+      "verdict": "true",
+      "note": "Reads like a GL export with a department dimension. No round placeholder numbers."
+    },
+    {
+      "claim": "Variety against reels 001-005",
+      "verdict": "true",
+      "note": "Those four were all text-versus-number or hidden-character mismatches. This one is structural fragility from a sheet edit, and the narration shares no phrasing with them."
+    }
+  ]
+}
