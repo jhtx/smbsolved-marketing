@@ -39,8 +39,42 @@ export async function accessToken(): Promise<string> {
   return data.access_token;
 }
 
+/** The channel a token actually controls. Uploads land here, wherever "here" is. */
+export async function boundChannel(token: string): Promise<{ id: string; title: string; handle?: string }> {
+  const res = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = (await res.json()) as {
+    items?: { id: string; snippet: { title: string; customUrl?: string } }[];
+    error?: { message: string };
+  };
+  if (body.error) throw new Error(`YouTube channel lookup: ${body.error.message}`);
+  const ch = body.items?.[0];
+  if (!ch) throw new Error('this YouTube token controls no channel');
+  return { id: ch.id, title: ch.snippet.title, handle: ch.snippet.customUrl };
+}
+
+/**
+ * A Google account can manage several channels, and the consent screen picks
+ * one. Publishing a reel to the wrong channel is public, wrong, and awkward to
+ * undo, so when YOUTUBE_CHANNEL_ID is set the upload refuses to run against
+ * anything else. Unset, it uploads wherever the token points and says so.
+ */
+async function assertChannel(token: string): Promise<string> {
+  const ch = await boundChannel(token);
+  const want = process.env.YOUTUBE_CHANNEL_ID?.trim();
+  if (want && want !== ch.id)
+    throw new Error(
+      `this token uploads to "${ch.title}" (${ch.id}), but YOUTUBE_CHANNEL_ID expects ${want}. ` +
+        'Re-run npm run authorize -- youtube and pick the right channel, or fix YOUTUBE_CHANNEL_ID.',
+    );
+  return ch.title;
+}
+
 export async function uploadShort(input: PostInput): Promise<{ id: string; url: string }> {
   const token = await accessToken();
+  const channel = await assertChannel(token);
+  console.log(`  youtube: uploading to "${channel}"`);
   const size = statSync(input.mp4).size;
 
   const metadata = {

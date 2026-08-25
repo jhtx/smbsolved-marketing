@@ -24,7 +24,8 @@
     "poll": "tsx pipeline/poll.ts",
     "authorize": "tsx pipeline/post/authorize.ts",
     "host": "tsx pipeline/post/host.ts",
-    "analytics": "tsx pipeline/analytics.ts"
+    "analytics": "tsx pipeline/analytics.ts",
+    "doctor": "tsx pipeline/doctor.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

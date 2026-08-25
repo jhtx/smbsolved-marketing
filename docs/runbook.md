@@ -45,6 +45,7 @@ npm run ig                       # Instagram: who am I + latest media
 npm run poll                     # check for ✅ and post now, instead of waiting
 npm run poll -- --dry-run        # say what would happen, change nothing
 npm run poll -- --retry          # after fixing a credential, re-run what did not go out
+npm run doctor                   # probe every posting credential for real
 npm run analytics                # pull the numbers now
 npm run analytics -- --report    # exactly what the miner will be told
 npm run authorize -- youtube     # one-time consent per platform (also linkedin, tiktok)
@@ -81,6 +82,11 @@ says exactly which cells disagree.
   broadcasts work.
 - TikTok cannot publish through its API until the app passes content-posting
   audit, so the poller pushes a draft and says so. It never reports "posted".
+  Owner's call 2026-08-25: post TikTok by hand until then.
+- A Google account can manage several YouTube channels. Whichever one the
+  consent screen picked is where Shorts land, so YOUTUBE_CHANNEL_ID pins it
+  and the upload refuses to run against any other. `npm run doctor` names the
+  channel a token actually controls.
 - LinkedIn's credential is a 60-day access token, not a refresh token. The
   poller warns in Slack a week out; `npm run authorize -- linkedin` renews it.
 - Analytics cover Instagram and YouTube only. LinkedIn has no analytics API
