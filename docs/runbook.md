@@ -44,6 +44,7 @@ npm run template:far -- --check <path>   # re-verify a hand-edited copy, then pu
 npm run ig                       # Instagram: who am I + latest media
 npm run poll                     # check for ✅ and post now, instead of waiting
 npm run poll -- --dry-run        # say what would happen, change nothing
+npm run poll -- --retry          # after fixing a credential, re-run what did not go out
 npm run analytics                # pull the numbers now
 npm run analytics -- --report    # exactly what the miner will be told
 npm run authorize -- youtube     # one-time consent per platform (also linkedin, tiktok)

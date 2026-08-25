@@ -25,7 +25,7 @@ Target three to four a week. Keep this list ten deep or the pipeline starves.
       space (CHAR 160) from a web export, SUBSTITUTE
 - [x] **006** VLOOKUP breaks every time someone inserts a column →
       column index is positional, use XLOOKUP or MATCH
-- [ ] **007** [general] The #N/A error wrecks your whole report → wrap the
+- [x] **007** [general] The #N/A error wrecks your whole report → wrap the
       lookup in IFERROR with an empty string
 - [ ] **012** [owner] Your VLOOKUP shows 0 where the source cell is actually empty, and the report reads like a real zero balance → Blank source cells return 0, so wrap it: =IF(VLOOKUP(...)="","",VLOOKUP(...)) or append &"" for text
       <https://superuser.com/questions/1934549/i-need-to-add-isblank-to-a-formula-but-not-sure-where-to-input-it-within-the-for> · A zero that means "no data" instead of "nothing owed" is the exact kind of lie an owner reads straight past. (high)

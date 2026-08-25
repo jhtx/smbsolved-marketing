@@ -1,0 +1,88 @@
+{
+  "verdict": "revise",
+  "findings": [
+    {
+      "severity": "blocking",
+      "where": "script[0] hook VO: \"Half the column says #N/A\"",
+      "issue": "Contradicts the sheet the viewer is about to see. There are three lookup rows and only one miss (T. Okafor); rows 3 and 4 fill in with Finance and Logistics. The narration also fights the later line \"That top row is a new starter,\" which is singular. Accountants count rows.",
+      "fix": "Either state the truth (\"One row says #N/A, and that name really isn't in the directory\") or change the data so two of three names miss and keep the plural."
+    },
+    {
+      "severity": "minor",
+      "where": "hook.body: \"and this time the name really isn't there\"",
+      "issue": "\"this time\" is a callback to reel 001 (\"#N/A but the value is right there\"). A first-time viewer has no \"last time\" and reads it as a dangling reference.",
+      "fix": "Drop the callback. Something like \"the name really isn't in the list\" stands alone."
+    },
+    {
+      "severity": "minor",
+      "where": "hook overall / variety",
+      "issue": "Third hook in the set led by #N/A (001, 005, now 007). The concept is different but the opening shape is becoming the channel's default.",
+      "fix": "Lead on the consequence instead of the error string, e.g. the column of errors going out to whoever asked for the file, and let #N/A appear on screen rather than as the lead word."
+    },
+    {
+      "severity": "minor",
+      "where": "script[8] showResult VO: \"Two quote marks with nothing between them leaves it blank instead\"",
+      "issue": "Second idea inside the one-concept reel, and it is on the beat where the result lands, so it competes with the payoff of the fix. Also slightly overstated (see claims).",
+      "fix": "Cut the aside from the VO. It already lives in the description, which is the right place for it."
+    },
+    {
+      "severity": "minor",
+      "where": "payoff.headline / payoff.sub",
+      "issue": "Headline is three lines (house rule is two) and uses the \"X, not Y\" shape the writing rules push against. The sub repeats almost word for word the caveat already narrated at script[10], so the last thing the viewer hears is a rerun.",
+      "fix": "Two-line headline, one idea, e.g. a line about labelling the miss. Then a sub that adds the trust condition in different words instead of restating \"IFERROR catches every error.\""
+    },
+    {
+      "severity": "minor",
+      "where": "sheet.rows / topic framing",
+      "issue": "An HR staff list and department directory is realistic but is not data coming out of an accounting system, and the reel carries no [general] marker that would license everyday data.",
+      "fix": "Same mechanic, accounting source: a new hire missing from the payroll master when you are coding departments/cost centres, or a new vendor missing from the AP vendor master."
+    },
+    {
+      "severity": "minor",
+      "where": "script[6]-[7]",
+      "issue": "The uncued line only says \"decide what a miss should say\"; IFERROR is first named on the same line as the typeFix cue, so the fix is named as it types rather than before.",
+      "fix": "Move \"wrap it in IFERROR and hand it the words you want\" to the uncued line and put a shorter line on typeFix."
+    }
+  ],
+  "hook": {
+    "score": 4,
+    "note": "Real symptom, concrete, 9 on-screen words, and it earns its place by being the honest opposite of reel 001. Held back by the \"this time\" callback that only regulars parse, and by being the third #N/A-led opener."
+  },
+  "claims": [
+    {
+      "claim": "VLOOKUP with FALSE returns #N/A when the lookup value is not in the first column of the range",
+      "verdict": "true",
+      "note": "Exact-match VLOOKUP, A2 not present in $A$8:$A$10."
+    },
+    {
+      "claim": "IFERROR catches every error, not just missing names",
+      "verdict": "true",
+      "note": "Traps #N/A, #VALUE!, #REF!, #DIV/0!, #NUM!, #NAME?, #NULL! and the newer #SPILL!/#CALC!. The caveat is correctly stated."
+    },
+    {
+      "claim": "Two quote marks with nothing between them leaves the cell blank",
+      "verdict": "overstated",
+      "note": "Returns an empty text string. It looks blank but ISBLANK is FALSE, COUNTA counts it, and downstream math can see text. Say \"looks blank\" if the line stays."
+    },
+    {
+      "claim": "Half the column says #N/A",
+      "verdict": "false",
+      "note": "One of three lookup rows errors on the sheet as built."
+    },
+    {
+      "claim": "Nothing's wrong with the formula; the row just doesn't exist yet",
+      "verdict": "true",
+      "note": "Matches the sheet. Good, and it is the honest premise this reel needs."
+    },
+    {
+      "claim": "Names that do match still come through after filling down",
+      "verdict": "true",
+      "note": "fillDown values Finance and Logistics match rows 9 and 10 of the directory."
+    },
+    {
+      "claim": "No version caveat needed",
+      "verdict": "true",
+      "note": "IFERROR ships in Excel 2007 and later; VLOOKUP is universal. Nothing here breaks on a locked-down 2016/2019 install."
+    }
+  ]
+}

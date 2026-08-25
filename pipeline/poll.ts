@@ -15,8 +15,10 @@
  *   npx tsx pipeline/poll.ts --dry-run     # say what would happen, change nothing
  *   npx tsx pipeline/poll.ts --reel 006-vlookup-column-insert
  *   npx tsx pipeline/poll.ts --force       # post without the ✅ (asks out loud first)
- *   npx tsx pipeline/poll.ts --retry-skipped   # after adding credentials that
- *                                              # were missing when a reel was approved
+ *   npx tsx pipeline/poll.ts --retry      # after fixing whatever was wrong:
+ *                                         # re-runs platforms that were skipped
+ *                                         # for missing credentials, and ones
+ *                                         # that used up their retries
  */
 import './env';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -59,9 +61,9 @@ async function handle(
   rec: DeliveryRecord,
   dryRun: boolean,
   force: boolean,
-  retrySkipped: boolean,
+  retry: boolean,
 ) {
-  const todo = pending(rec, retrySkipped);
+  const todo = pending(rec, retry);
   if (!todo.length) return;
 
   if (!force) {
@@ -151,9 +153,9 @@ async function main() {
     /* a missed reminder must never stop a post */
   });
 
-  const retrySkipped = flag('--retry-skipped');
+  const retry = flag('--retry');
   const records = allRecords().filter((r) => (only ? r.stem === only : true));
-  const waiting = records.filter((r) => pending(r, retrySkipped).length);
+  const waiting = records.filter((r) => pending(r, retry).length);
   if (!waiting.length) {
     console.log('nothing waiting to post');
     return;
@@ -167,7 +169,7 @@ async function main() {
 
   for (const rec of waiting) {
     try {
-      await handle(client, rec, dryRun, force, retrySkipped);
+      await handle(client, rec, dryRun, force, retry);
     } catch (e) {
       log(`${rec.stem}: poll failed — ${(e as Error).message}`);
     }

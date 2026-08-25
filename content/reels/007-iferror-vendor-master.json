@@ -1,0 +1,200 @@
+{
+  "id": "007",
+  "slug": "iferror-vendor-master",
+  "title": "IFERROR replaces #N/A when a new vendor isn't on the master yet",
+  "hook": {
+    "lead": "SENT",
+    "body": "with #N/A down the\ncost center column"
+  },
+  "payoff": {
+    "headline": "LABEL THE MISS\nYOURSELF",
+    "sub": "Worth doing once you're confident the lookup itself is sound."
+  },
+  "sheet": {
+    "rows": [
+      {
+        "n": 1,
+        "a": "Vendor",
+        "b": "Cost Center",
+        "hdr": true,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 2,
+        "a": "Brightline Freight",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 3,
+        "a": "Kearny Supply",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 4,
+        "a": "Delacourt Paper",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 5,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "none"
+      },
+      {
+        "n": 6,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "none"
+      },
+      {
+        "n": 7,
+        "a": "Vendor Name",
+        "b": "Cost Center",
+        "hdr": true,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 8,
+        "a": "Kearny Supply",
+        "b": "6200 Warehouse",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 9,
+        "a": "Delacourt Paper",
+        "b": "6410 Admin",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 10,
+        "a": "Halvorsen Tool",
+        "b": "6300 Plant",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      }
+    ],
+    "target": "B2",
+    "fillDown": {
+      "3": "6200 Warehouse",
+      "4": "6410 Admin"
+    }
+  },
+  "formulas": {
+    "before": {
+      "cell": "B2",
+      "text": "=VLOOKUP(A2,$A$8:$B$10,2,FALSE)",
+      "expected": "#N/A",
+      "isError": true
+    },
+    "after": {
+      "cell": "B2",
+      "text": "=IFERROR(VLOOKUP(A2,$A$8:$B$10,2,FALSE),\"Not in vendor master\")",
+      "expected": "Not in vendor master",
+      "isError": false
+    }
+  },
+  "script": [
+    {
+      "vo": "You send the coding file over, and there's an #N/A sitting in the cost center column.",
+      "cue": "hook"
+    },
+    {
+      "vo": "AP invoices waiting to be coded.",
+      "caption": "AP invoices waiting\nto be coded.",
+      "cue": "revealTop"
+    },
+    {
+      "vo": "The vendor master is right below.",
+      "caption": "Vendor master\nsits right below.",
+      "cue": "revealBottom"
+    },
+    {
+      "vo": "Ordinary VLOOKUP, exact match, pointed at the master.",
+      "caption": "Ordinary VLOOKUP.\nExact match.",
+      "cue": "typeFormula"
+    },
+    {
+      "vo": "Brightline Freight is a new vendor. One row, one #N/A.",
+      "caption": "New vendor.\nNo row to find.",
+      "cue": "showError"
+    },
+    {
+      "vo": "The formula's doing its job. There's just no row to find.",
+      "caption": "Formula's fine.\nThe row doesn't exist.",
+      "cue": "markError"
+    },
+    {
+      "vo": "So wrap the lookup in IFERROR and hand it the words you want in place of the error.",
+      "caption": "Wrap it in *IFERROR*.\nHand it your own words."
+    },
+    {
+      "vo": "Spell it out for whoever reads the file next.",
+      "caption": "Spell it out for\nthe next reader.",
+      "cue": "typeFix"
+    },
+    {
+      "vo": "Now the cell explains itself.",
+      "caption": "Now the cell\nexplains itself.",
+      "cue": "showResult"
+    },
+    {
+      "vo": "Fill down, and every vendor that is on the master still comes through.",
+      "caption": "Vendors on the master\nstill come through.",
+      "cue": "fillDown"
+    },
+    {
+      "vo": "Worth knowing, IFERROR hides a typo or a broken reference just as quietly.",
+      "caption": "IFERROR hides typos\nand bad references too."
+    },
+    {
+      "vo": "So save it for a lookup you already trust.",
+      "cue": "payoff"
+    }
+  ],
+  "post": {
+    "title": "Replace #N/A when a vendor isn't on the master yet",
+    "description": "how to replace #N/A in a vlookup when the vendor isn't in the list\nWrap the lookup in IFERROR and give the miss a label, or use two empty quote marks if you want the cell blank. Save this one.",
+    "hashtags": [
+      "excel",
+      "accounting",
+      "exceltips",
+      "vlookup",
+      "iferror"
+    ]
+  },
+  "verification": {
+    "excel": "16.0.20326",
+    "on": "2026-08-25",
+    "formulasHash": "dee789c7ed39a0b2"
+  }
+}

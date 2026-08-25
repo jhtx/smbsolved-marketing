@@ -70,14 +70,14 @@ export async function postAll(
         state: 'skipped',
         at: now(),
         provisional: true,
-        note: `not configured. Add ${missing.join(', ')} to .env.local, then either post this one by hand or run: npm run poll -- --retry-skipped`,
+        note: `not configured. Add ${missing.join(', ')} to .env.local, then either post this one by hand or run: npm run poll -- --retry`,
       };
     } else if (needsUrl && !hostConfigured()) {
       result = {
         state: 'skipped',
         at: now(),
         provisional: true,
-        note: 'needs the MP4 at a public URL. Add GITHUB_TOKEN to .env.local (see .env.example), then either post this one by hand or run: npm run poll -- --retry-skipped',
+        note: 'needs the MP4 at a public URL. Add GITHUB_TOKEN to .env.local (see .env.example), then either post this one by hand or run: npm run poll -- --retry',
       };
     } else if (poster.name === 'linkedin') {
       const hold = linkedinHold();

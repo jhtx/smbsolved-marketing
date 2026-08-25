@@ -30,9 +30,9 @@ export type PostResult = {
   attempts?: number;
   /**
    * Skips only. True when the skip was an absence rather than a decision:
-   * the credentials were not there yet. Cleared by `poll --retry-skipped`
-   * once they are. A cadence hold is NOT provisional; that reel was simply
-   * not a LinkedIn reel.
+   * the credentials were not there yet. Cleared by `poll --retry` once they
+   * are. A cadence hold is NOT provisional; that reel was simply not a
+   * LinkedIn reel, and retrying it would break the cadence on purpose.
    */
   provisional?: boolean;
 };
@@ -85,12 +85,15 @@ export function allRecords(): DeliveryRecord[] {
  * Anything that reached `posted`, `drafted` or `skipped` is never touched
  * again, which is what makes a poll every ten minutes safe.
  */
-export const pending = (rec: DeliveryRecord, retrySkipped = false): Platform[] =>
+export const pending = (rec: DeliveryRecord, retry = false): Platform[] =>
   PLATFORMS.filter((p) => {
     const r = rec.posts[p];
     if (!r) return true;
-    if (r.state === 'failed') return (r.attempts ?? 1) < MAX_ATTEMPTS;
-    return retrySkipped && r.state === 'skipped' && r.provisional === true;
+    // `retry` is the human saying "I fixed the thing that was wrong": it
+    // reaches past the attempt limit and past a skip that was only an absence
+    // of credentials. It never reaches a cadence hold.
+    if (r.state === 'failed') return retry || (r.attempts ?? 1) < MAX_ATTEMPTS;
+    return retry && r.state === 'skipped' && r.provisional === true;
   });
 
 /** True once every platform has an outcome, whatever that outcome was. */

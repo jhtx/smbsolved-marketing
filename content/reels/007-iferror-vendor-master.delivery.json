@@ -1,0 +1,16 @@
+{
+  "stem": "007-iferror-vendor-master",
+  "reelPath": "content/reels/007-iferror-vendor-master.json",
+  "mp4": "out/007-iferror-vendor-master.mp4",
+  "stills": [
+    "C:\\projects\\smbsolved-marketing\\out\\007-iferror-vendor-master-hook.png",
+    "C:\\projects\\smbsolved-marketing\\out\\007-iferror-vendor-master-result.png"
+  ],
+  "deliveredAt": "2026-08-25T11:35:29.022Z",
+  "slack": {
+    "channel": "C0BPQRPQMK5",
+    "ts": "1787657728.224369",
+    "permalink": "https://smb-solved.slack.com/archives/C0BPQRPQMK5/p1787657728224369"
+  },
+  "posts": {}
+}
