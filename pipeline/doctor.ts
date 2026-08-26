@@ -174,9 +174,23 @@ async function facebook() {
   const gaps = missing('FACEBOOK_PAGE_ID', 'FACEBOOK_PAGE_TOKEN');
   if (gaps.length) return add('Facebook', 'todo', `missing ${gaps.join(', ')}`, 'run: npm run authorize -- facebook');
   try {
-    const { assertPage } = await import('./post/facebook');
+    const { assertPage, pageTokenInfo } = await import('./post/facebook');
     const page = await assertPage();
-    add('Facebook', 'pass', `posts as the Page "${page.name}" (${page.id})`);
+    const info = await pageTokenInfo();
+    if (info.type !== 'PAGE')
+      return add('Facebook', 'fail', `token type is ${info.type}, not PAGE`, 'run: npm run authorize -- facebook');
+    // expires_at 0 means never, which is what a Page token from a long-lived
+    // user token gives you. Anything else is a credential with a fuse on it.
+    if (info.expiresAt !== 0) {
+      const hours = (info.expiresAt * 1000 - Date.now()) / 3_600_000;
+      return add(
+        'Facebook',
+        'fail',
+        `Page "${page.name}" but the token expires ${hours < 0 ? 'ALREADY EXPIRED' : `in ${hours.toFixed(1)}h`} (${new Date(info.expiresAt * 1000).toISOString().slice(0, 16).replace('T', ' ')})`,
+        'it came from a short-lived user token. Add FACEBOOK_APP_ID and FACEBOOK_APP_SECRET, then: npm run authorize -- facebook --from-user-token',
+      );
+    }
+    add('Facebook', 'pass', `posts as the Page "${page.name}" (${page.id}), token does not expire`);
   } catch (e) {
     // The usual failure is a user token wearing a Page token's name, and
     // assertPage already says so in one sentence.

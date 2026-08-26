@@ -145,13 +145,50 @@ type FbPage = { id: string; name: string; category?: string; access_token?: stri
  * from the OAuth flow because it is also the whole fix when someone already
  * has a user token and only needs to trade it, with no app secret involved.
  */
-export async function pageFromUserToken(userToken: string): Promise<void> {
+export async function pageFromUserToken(rawUserToken: string): Promise<void> {
   const V = process.env.FACEBOOK_API_VERSION?.trim() || 'v25.0';
   const G = `https://graph.facebook.com/${V}`;
+
+  // A Page token inherits the life of the user token it came from, so extend
+  // the user token FIRST or the Page token quietly expires within the hour.
+  // This is the step that is easy to skip in the Graph API Explorer.
+  let userToken = rawUserToken;
+  const appId = process.env.FACEBOOK_APP_ID?.trim();
+  const appSecret = process.env.FACEBOOK_APP_SECRET?.trim();
+  if (appId && appSecret) {
+    const ll = (await (
+      await fetch(
+        `${G}/oauth/access_token?grant_type=fb_exchange_token&client_id=${encodeURIComponent(appId)}` +
+          `&client_secret=${encodeURIComponent(appSecret)}&fb_exchange_token=${encodeURIComponent(rawUserToken)}`,
+      )
+    ).json()) as { access_token?: string; error?: { message: string } };
+    if (ll.access_token) {
+      userToken = ll.access_token;
+      console.log('extended the user token to long-lived, so the Page token will not expire');
+    } else {
+      console.log(`could not extend the user token: ${ll.error?.message ?? 'unknown'}`);
+    }
+  } else {
+    console.log(
+      'FACEBOOK_APP_ID / FACEBOOK_APP_SECRET are not set, so the user token cannot be extended.\n' +
+        'The Page token will inherit whatever life the user token has, which for a freshly\n' +
+        'generated Explorer token is about an hour. Add them and re-run for a permanent one.',
+    );
+  }
+
   const accounts = (await (
     await fetch(`${G}/me/accounts?fields=id,name,category,access_token&access_token=${encodeURIComponent(userToken)}`)
   ).json()) as { data?: FbPage[]; error?: { message: string } };
-  if (accounts.error) throw new Error(`Facebook: ${accounts.error.message}`);
+  if (accounts.error) {
+    // Pages have no /me/accounts edge, so this exact error means someone fed a
+    // Page token to the step that turns user tokens into Page tokens.
+    if (/nonexisting field \(accounts\)/.test(accounts.error.message))
+      throw new Error(
+        'that is already a Page token, not a user token. This step turns a USER token into a Page token. ' +
+          'If you are trying to replace an expiring Page token, paste the user token you generated it from.',
+      );
+    throw new Error(`Facebook: ${accounts.error.message}`);
+  }
 
   const pages = (accounts.data ?? []).filter((p) => p.access_token);
   if (!pages.length)
@@ -174,7 +211,21 @@ export async function pageFromUserToken(userToken: string): Promise<void> {
   setEnvLocal('FACEBOOK_PAGE_ID', chosen.id);
   setEnvLocal('FACEBOOK_PAGE_TOKEN', chosen.access_token!);
   console.log(`
-Facebook Page set to "${chosen.name}" (${chosen.id}). Page tokens do not expire.`);
+Facebook Page set to "${chosen.name}" (${chosen.id}).`);
+
+  // Say plainly whether the thing just written is permanent, rather than
+  // asserting it and being wrong.
+  const at = encodeURIComponent(chosen.access_token!);
+  const dbg = (await (await fetch(`${G}/debug_token?input_token=${at}&access_token=${at}`)).json()) as {
+    data?: { expires_at?: number };
+  };
+  const expires = dbg.data?.expires_at ?? 0;
+  console.log(
+    expires === 0
+      ? 'This Page token does not expire.'
+      : `WARNING: this Page token expires ${new Date(expires * 1000).toISOString().slice(0, 16).replace('T', ' ')}. ` +
+          'Set FACEBOOK_APP_ID and FACEBOOK_APP_SECRET and run this again for a permanent one.',
+  );
 }
 
 const args = process.argv.slice(2);

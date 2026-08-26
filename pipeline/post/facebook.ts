@@ -61,6 +61,29 @@ export async function assertPage(): Promise<Identity> {
   return { id: me.id, name: me.name };
 }
 
+export type TokenInfo = { type: string; expiresAt: number; scopes: string[] };
+
+/**
+ * What kind of token this is and when it dies.
+ *
+ * A Page token inherits the life of the user token it came from. Derived from
+ * a SHORT-lived one it lasts about an hour, which looks perfect in every other
+ * check and then breaks the next morning; derived from a long-lived one it
+ * never expires (`expires_at: 0`). That difference is invisible unless you ask
+ * for it, so we ask.
+ */
+export async function pageTokenInfo(): Promise<TokenInfo> {
+  const token = requireEnv('FACEBOOK_PAGE_TOKEN');
+  const at = encodeURIComponent(token);
+  const res = await fetch(`${graph()}/debug_token?input_token=${at}&access_token=${at}`);
+  const body = (await res.json()) as {
+    data?: { type?: string; expires_at?: number; scopes?: string[] };
+    error?: { message: string };
+  };
+  if (body.error || !body.data) throw new Error(`Facebook: ${body.error?.message ?? 'could not inspect the token'}`);
+  return { type: body.data.type ?? '?', expiresAt: body.data.expires_at ?? 0, scopes: body.data.scopes ?? [] };
+}
+
 async function fb<T>(path: string, params: Record<string, string>): Promise<T> {
   const res = await fetch(`${graph()}${path}`, {
     method: 'POST',
