@@ -168,7 +168,20 @@ async function linkedin() {
       headers: { Authorization: `Bearer ${process.env.LINKEDIN_ACCESS_TOKEN}` },
     });
     const b = (await r.json()) as { name?: string; sub?: string };
-    if (!r.ok) return add('LinkedIn', 'fail', `${r.status} ${JSON.stringify(b).slice(0, 120)}`, 're-authorize');
+    if (!r.ok) {
+      // A token authorised with w_member_social alone can post but cannot read
+      // userinfo, which is fine as long as the URN is pinned by hand. That is
+      // a working setup, not a broken one.
+      const pinned = process.env.LINKEDIN_MEMBER_URN?.trim();
+      return pinned
+        ? add('LinkedIn', 'pass', `posts as ${pinned} (pinned; the token cannot read userinfo, which only matters for looking that up)`)
+        : add(
+            'LinkedIn',
+            'fail',
+            `${r.status} ${JSON.stringify(b).slice(0, 120)}`,
+            'add the Sign In with LinkedIn using OpenID Connect product, or set LINKEDIN_MEMBER_URN by hand',
+          );
+    }
     const expires = process.env.LINKEDIN_TOKEN_EXPIRES;
     const days = expires ? Math.round((new Date(expires).getTime() - Date.now()) / 86_400_000) : null;
     add('LinkedIn', 'pass', `posts as ${b.name} (urn:li:person:${b.sub})${days !== null ? `, token good for ${days} more days` : ''}`);
