@@ -1,6 +1,6 @@
 # Runbook
 
-What runs, when, and what Jimmy actually does. Current as of 2026-08-24.
+What runs, when, and what Jimmy actually does. Current as of 2026-08-25.
 Strategy and evidence: `docs/strategy-2026-08-22.html` (also published as the
 playbook artifact). Reasoning for every rule: `DECISIONS.md`.
 
@@ -48,7 +48,8 @@ npm run poll -- --retry          # after fixing a credential, re-run what did no
 npm run doctor                   # probe every posting credential for real
 npm run analytics                # pull the numbers now
 npm run analytics -- --report    # exactly what the miner will be told
-npm run authorize -- youtube     # one-time consent per platform (also linkedin, tiktok)
+npm run authorize -- youtube     # one-time consent (also facebook, linkedin, tiktok)
+npm run authorize -- facebook --from-user-token   # trade a user token for the Page token
 npm run kit:setup                # idempotent Kit objects (tag/sequence/emails)
 npm run site:publish -- <local> <repoPath>  # push any file to smbsolved.com
 ```
@@ -107,8 +108,18 @@ says exactly which cells disagree.
 
 ## Next build items (in rough order)
 
-1. ✅ Schema widening: insert beats, shipped 2026-08-24 (reel 006 uses them)
-2. ✅ Poller + auto-posting, shipped 2026-08-24
-3. ✅ Nightly analytics into SQLite, feeding the miner, shipped 2026-08-24
-4. Table / structured-reference rendering, which is what 003 is now parked on
-5. LinkedIn static-frame second composition variants, if the A/B warrants it
+Shipped 2026-08-24/25: schema widening for insert beats (reel 006 uses them),
+the ✅ poller and auto-posting across five platform integrations, nightly
+analytics feeding the miner, and `npm run doctor`.
+
+Next, in rough order:
+
+1. Facebook Page insights in `analytics.ts`. Facebook posts automatically now
+   and its numbers are not collected, so the miner sees an incomplete picture
+   of what actually landed.
+2. Table / structured-reference rendering and verification, which is the only
+   thing still parking reel 003.
+3. Hand LinkedIn to `AUTOPOST` once the profile is warm. The cadence guard
+   (`linkedinHold`) is already written and waiting behind the switch.
+4. TikTok content-posting audit, if publishing there is worth the paperwork.
+5. LinkedIn static-frame second composition variants, if the A/B warrants it.

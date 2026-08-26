@@ -198,16 +198,26 @@ Locked. Changing any of this breaks recognizability across the channel.
 - **A ✅ on the Slack message means "post this for me", not "I posted it."**
   `poll.ts` runs every ten minutes, sees the reaction, and posts. Nothing
   posts without that reaction, and a platform that already went out is never
-  retried. `AUTOPOST` in `.env.local` is an allow-list of the platforms it may
-  post to, so working credentials alone never start publishing anywhere. TikTok is the exception and says so: until the app is audited its
-  API can only push a draft to the app inbox, so it reports `drafted` and the
-  last step stays manual. LinkedIn is held to the cadence below automatically.
-- Cadence (evidence in the strategy document): Instagram / TikTok / Shorts
-  3–4 reels a week, the same reel everywhere, and one of them is the weekly
-  `[general]` tip; LinkedIn 2 posts a week from the founder's profile — one
-  native reel, one static frame or text post — never two within 24 hours,
-  plus 10–15 minutes a day of commenting. Never a zero week on any platform;
-  a skipped week costs more than a lighter one.
+  retried.
+- `AUTOPOST` in `.env.local` is the allow-list of platforms the reaction may
+  post to, currently YouTube, Instagram and the Facebook Page. An allow-list
+  rather than a block-list, so working credentials alone can never start
+  publishing somewhere. LinkedIn and TikTok are held out by the owner's
+  decision (2026-08-25) and posted by hand: LinkedIn because the profile is
+  still being warmed up, TikTok because its API cannot publish publicly until
+  the app passes audit and would only leave a draft in an inbox.
+- `npm run doctor` proves each credential rather than checking it is present.
+  Run it after touching any of them. Presence has been wrong four separate
+  times here: a token that could read a repo but not write it, one bound to
+  the wrong YouTube channel, a Facebook user token wearing a Page token's
+  name, and a Page token that expired an hour later.
+- Cadence (evidence in the strategy document): Instagram / TikTok / Shorts /
+  Facebook 3–4 reels a week, the same reel everywhere, and one of them is the
+  weekly `[general]` tip; LinkedIn 2 posts a week from the founder's profile —
+  one native reel, one static frame or text post — never two within 24 hours,
+  plus 10–15 minutes a day of commenting. The LinkedIn rule is enforced in
+  code (`linkedinHold`) and waiting behind the AUTOPOST switch. Never a zero
+  week on any platform; a skipped week costs more than a lighter one.
 - Burn captions in; switch off the platform's auto-captions on the post.
 
 ---
