@@ -74,7 +74,7 @@ const PROVIDERS: Record<string, Provider> = {
     // token is the credential, and poll.ts warns before it expires.
     saveField: 'access_token',
     defaultRedirect: 'http://localhost:8723/callback',
-    hint: 'developer.linkedin.com → your app → Auth tab. Add this redirect URL, and request the "Share on LinkedIn" and "Sign In with LinkedIn using OpenID Connect" products.',
+    hint: 'developer.linkedin.com → your app. Auth tab: add this exact redirect URL. Products tab: "Share on LinkedIn" grants w_member_social, "Sign In with LinkedIn using OpenID Connect" grants openid and profile. invalid_scope_error means one of those products is missing; isolate it with --scope "openid profile" or --scope "w_member_social".',
   },
   tiktok: {
     authUrl: 'https://www.tiktok.com/v2/auth/authorize/',
@@ -121,13 +121,17 @@ function waitForCode(redirect: string, state: string): Promise<string> {
       }
       const code = got.searchParams.get('code');
       const error = got.searchParams.get('error');
+      // Providers put the useful half in error_description, and losing it
+      // turns a five-second fix into a guessing game.
+      const detail = got.searchParams.get('error_description') ?? '';
+      const failure = [error, detail].filter(Boolean).join(': ');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(
-        `<body style="font:16px system-ui;padding:3rem">${code ? 'Authorised. You can close this tab.' : `Failed: ${error}`}</body>`,
+        `<body style="font:16px system-ui;padding:3rem">${code ? 'Authorised. You can close this tab.' : `Failed: ${failure}<br><br>The terminal has the details.`}</body>`,
       );
       server.close();
       if (got.searchParams.get('state') !== state) return reject(new Error('state mismatch, aborting'));
-      code ? resolve(code) : reject(new Error(error ?? 'no code returned'));
+      code ? resolve(code) : reject(new Error(failure || 'no code returned'));
     });
     server.listen(Number(url.port || 80), '127.0.0.1');
     setTimeout(() => {
@@ -140,13 +144,20 @@ function waitForCode(redirect: string, state: string): Promise<string> {
 async function main() {
   const provider = PROVIDERS[name];
   if (!provider) {
-    console.error(`usage: authorize.ts <${Object.keys(PROVIDERS).join('|')}> [--paste] [--redirect <url>]`);
+    console.error(
+      `usage: authorize.ts <${Object.keys(PROVIDERS).join('|')}> [--paste] [--redirect <url>] [--scope "<space separated>"]`,
+    );
     process.exit(1);
   }
 
   const clientId = need(provider.idEnv, name);
   const secret = need(provider.secretEnv, name);
   const redirect = opt('--redirect') ?? provider.defaultRedirect;
+  // LinkedIn answers "invalid_scope_error" without saying WHICH scope, and the
+  // cause is always a Product that has not been added to the app. Asking for a
+  // subset isolates it: --scope "openid profile" tests Sign In with OpenID
+  // Connect, --scope "w_member_social" tests Share on LinkedIn.
+  const scope = opt('--scope') ?? provider.scope;
   const paste = flag('--paste') || !redirect.startsWith('http://localhost');
   const state = randomBytes(12).toString('hex');
 
@@ -155,7 +166,7 @@ async function main() {
     [provider.idParam]: clientId,
     response_type: 'code',
     redirect_uri: redirect,
-    scope: provider.scope,
+    scope,
     state,
     ...(provider.extraAuth ?? {}),
     ...(provider.pkce
@@ -167,6 +178,7 @@ async function main() {
   // registered value" is the most common failure here, and the fix is to
   // paste this string into the app config character for character.
   console.log(`\nredirect_uri being sent (must match the app config EXACTLY):\n  ${redirect}`);
+  console.log(`scopes being requested:\n  ${scope}`);
   console.log(`\nOpen this and approve as the smbsolved account:\n\n${provider.authUrl}?${params}\n`);
   if (provider.hint) console.log(`(app setup: ${provider.hint})\n`);
 
