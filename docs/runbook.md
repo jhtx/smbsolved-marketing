@@ -20,8 +20,9 @@ fine). A missed daily run pages via healthchecks → Slack.
 ## Jimmy's loop
 
 - **Daily (~1 min):** watch the reel in Slack. If it is good, react ✅ and
-  the poller posts it to YouTube and Instagram within ten minutes and replies
-  in the thread with the links. LinkedIn and TikTok stay yours to post by hand
+  the poller posts it to YouTube, Instagram and the Facebook Page within ten
+  minutes and replies in the thread with the links. LinkedIn and TikTok stay
+  yours to post by hand
   (owner's call, `AUTOPOST` in .env.local); the copy is in the Slack message.
 - **Weekly (~5 min):** curate Sunday's mined candidates — number the keepers
   (`- [ ] **NNN** [tag] ...`, next free number, file order = queue, one
@@ -92,8 +93,8 @@ says exactly which cells disagree.
   token has the same permissions and cannot post; `npm run doctor` tells them
   apart, and `npm run authorize -- facebook --from-user-token` trades one for
   the other. On Facebook's consent screen the Page must be ticked explicitly.
-- `AUTOPOST=youtube,instagram` holds Facebook, LinkedIn and TikTok back from automatic
-  posting even though LinkedIn's credentials work. Add a platform to that list
+- `AUTOPOST=youtube,instagram,facebook` holds LinkedIn and TikTok back from
+  automatic posting even though LinkedIn's credentials work. Add a platform to that list
   to hand it over; `npm run doctor` shows which are held.
 - Analytics cover Instagram and YouTube only. LinkedIn has no analytics API
   for personal-profile posts, and TikTok videos are published by hand so the

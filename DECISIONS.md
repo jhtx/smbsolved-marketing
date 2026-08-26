@@ -521,3 +521,15 @@ Pages an app may use, and granting the permissions without ticking the Page
 leaves /me/accounts empty; both failures now name themselves.
 
 Facebook stays out of AUTOPOST until the owner says otherwise.
+
+## 2026-08-25 — Facebook joins AUTOPOST; LinkedIn and TikTok stay manual
+Owner's call once the Page token was verified permanent and its publish rights
+proven by opening a real Reels upload session. `AUTOPOST=youtube,instagram,facebook`.
+
+The two that stay out are out for different reasons, and neither is a defect.
+LinkedIn is a personal profile the owner wants to feel the rhythm of by hand
+before handing over, and its cadence guard (two a week, never two inside 24
+hours) is already built and waiting behind the switch. TikTok cannot publish
+through its API at all until the app passes content-posting audit, so
+automating it would only move a draft into an inbox the owner still has to
+open.
