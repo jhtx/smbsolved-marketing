@@ -1,8 +1,7 @@
 # Runbook
 
 What runs, when, and what Jimmy actually does. Current as of 2026-08-25.
-Strategy and evidence: `docs/strategy-2026-08-22.html` (also published as the
-playbook artifact). Reasoning for every rule: `DECISIONS.md`.
+Reasoning for every rule: `DECISIONS.md`.
 
 ## The machines
 

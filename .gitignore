@@ -7,3 +7,8 @@ content/reels/*.timing.json
 .env.*.local
 setup.txt
 .DS_Store
+
+# Business docs are kept outside this repo. Do not re-add.
+conversation.txt
+research.docx
+docs/strategy-*.html
