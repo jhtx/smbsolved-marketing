@@ -258,6 +258,10 @@ async function main() {
   // subset isolates it: --scope "openid profile" tests Sign In with OpenID
   // Connect, --scope "w_member_social" tests Share on LinkedIn.
   const scope = opt('--scope') ?? provider.scope;
+  // Facebook will not re-show a consent it thinks you already answered, which
+  // is how a grant with no Page attached becomes sticky. auth_type=rerequest
+  // is the documented way to make it ask again.
+  const rerequest = flag('--rerequest');
   const paste = flag('--paste') || !redirect.startsWith('http://localhost');
   const state = randomBytes(12).toString('hex');
 
@@ -269,6 +273,7 @@ async function main() {
     scope,
     state,
     ...(provider.extraAuth ?? {}),
+    ...(rerequest ? { auth_type: 'rerequest' } : {}),
     ...(provider.pkce
       ? { code_challenge: createHash('sha256').update(verifier).digest('base64url'), code_challenge_method: 'S256' }
       : {}),
