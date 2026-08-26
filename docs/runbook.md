@@ -20,10 +20,9 @@ fine). A missed daily run pages via healthchecks → Slack.
 ## Jimmy's loop
 
 - **Daily (~1 min):** watch the reel in Slack. If it is good, react ✅ and
-  the poller posts it within ten minutes and replies in the thread with the
-  links. TikTok lands as a draft in the app: open it, paste the caption from
-  the Slack message, publish.
-  Anything not configured yet says so in the message and stays yours to post.
+  the poller posts it to YouTube and Instagram within ten minutes and replies
+  in the thread with the links. LinkedIn and TikTok stay yours to post by hand
+  (owner's call, `AUTOPOST` in .env.local); the copy is in the Slack message.
 - **Weekly (~5 min):** curate Sunday's mined candidates — number the keepers
   (`- [ ] **NNN** [tag] ...`, next free number, file order = queue, one
   `[general]` per three or so), delete the rest.
@@ -89,6 +88,9 @@ says exactly which cells disagree.
   channel a token actually controls.
 - LinkedIn's credential is a 60-day access token, not a refresh token. The
   poller warns in Slack a week out; `npm run authorize -- linkedin` renews it.
+- `AUTOPOST=youtube,instagram` holds LinkedIn and TikTok back from automatic
+  posting even though LinkedIn's credentials work. Add a platform to that list
+  to hand it over; `npm run doctor` shows which are held.
 - Analytics cover Instagram and YouTube only. LinkedIn has no analytics API
   for personal-profile posts, and TikTok videos are published by hand so the
   pipeline never learns their ids.

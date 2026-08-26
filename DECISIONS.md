@@ -452,3 +452,37 @@ MP4s would have.
 
 Only reels posted in the last five weeks are pulled. The tail is noise, and
 bounding the window keeps the nightly call count flat as the channel grows.
+
+## 2026-08-25 — AUTOPOST is an allow-list, and LinkedIn is not on it
+Owner's decision the day auto-posting went live: LinkedIn is authorised and
+verified working, and it still does not post automatically. Warming a personal
+profile is not the same problem as filling a content channel, and the owner
+wants to feel that account's rhythm by hand before handing it over.
+
+So the setting is `AUTOPOST` in `.env.local`, currently `youtube,instagram`.
+Unset means every platform that has working credentials; a list restricts it to
+those named. Deliberately an allow-list rather than a block-list: having
+credentials for a platform must never be enough, on its own, to start
+publishing there. Adding TikTok's keys tomorrow will not start posting to
+TikTok, and that is the intended behaviour.
+
+A platform held this way is recorded `skipped` and NOT provisional, so
+`poll --retry` leaves it alone. That is the distinction the record now carries:
+a provisional skip is an absence (nobody added the keys yet) and gets retried,
+a plain skip is a decision (cadence, or AUTOPOST) and does not. Both the Slack
+message and `npm run doctor` say which one is which, because "by hand" for a
+missing token and "by hand" because you chose it are different facts and
+collapsing them is how someone ends up chasing a fault that is not there.
+
+## 2026-08-25 — npm run doctor
+Setup produced three throwaway probe scripts in one day, so the probes became a
+command. It exists because presence in `.env.local` proves nothing: the GitHub
+token could read the repo and not create the release Instagram needs, and a
+YouTube token can be valid and bound to a channel nobody meant to publish to.
+GitHub is therefore proven by writing — throwaway release, fetched back with no
+credentials exactly as Instagram will, then deleted.
+
+Confirmed by it on 2026-08-25: Instagram @smbsolved with publishing permission,
+YouTube bound to "SMB Solved" (@smbsolved) and pinned with YOUTUBE_CHANNEL_ID,
+LinkedIn posting as the founder personally (urn:li:person), not the company
+page that owns the app. The company page association is app ownership only.

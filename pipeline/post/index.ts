@@ -10,7 +10,14 @@
 import '../env';
 import { basename } from 'node:path';
 import type { Reel } from '../../src/reel/schema';
-import { MAX_ATTEMPTS, linkedinHold, type DeliveryRecord, type Platform, type PostResult } from '../delivery';
+import {
+  MAX_ATTEMPTS,
+  autopostAllows,
+  linkedinHold,
+  type DeliveryRecord,
+  type Platform,
+  type PostResult,
+} from '../delivery';
 import { hostPublicly, configured as hostConfigured } from './host';
 import { instagram } from './instagram';
 import { linkedin } from './linkedin';
@@ -65,7 +72,14 @@ export async function postAll(
     const needsUrl = NEEDS_PUBLIC_URL.includes(poster.name);
     let result: PostResult | null = null;
 
-    if (missing.length) {
+    if (!autopostAllows(poster.name)) {
+      // A decision, not a fault: never provisional, so --retry leaves it be.
+      result = {
+        state: 'skipped',
+        at: now(),
+        note: `held: ${poster.name} is not in AUTOPOST, so you post this one by hand`,
+      };
+    } else if (missing.length) {
       result = {
         state: 'skipped',
         at: now(),
@@ -117,14 +131,17 @@ export async function postAll(
  * What the ✅ will actually do, so the delivery message can say so honestly
  * instead of promising automation that has no credentials behind it.
  */
-export function automation(): { platform: Platform; ready: boolean; missing: string[]; note: string }[] {
+export function automation(): { platform: Platform; ready: boolean; why: string; note: string }[] {
   return POSTERS.map((p) => {
     const missing = missingEnv(p);
     if (NEEDS_PUBLIC_URL.includes(p.name) && !hostConfigured()) missing.push('GITHUB_TOKEN');
+    // Two different reasons a platform is yours to post, and the message has to
+    // tell them apart: a decision you made, or a credential nobody added.
+    const held = !autopostAllows(p.name);
     return {
       platform: p.name,
-      ready: missing.length === 0,
-      missing,
+      ready: !held && missing.length === 0,
+      why: held ? 'not in AUTOPOST' : missing.length ? `${missing.join(', ')} not set` : '',
       note:
         p.name === 'tiktok'
           ? 'draft pushed to your inbox, finish it in the app'

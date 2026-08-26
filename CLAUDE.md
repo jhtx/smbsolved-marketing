@@ -198,7 +198,8 @@ Locked. Changing any of this breaks recognizability across the channel.
 - **A ✅ on the Slack message means "post this for me", not "I posted it."**
   `poll.ts` runs every ten minutes, sees the reaction, and posts. Nothing
   posts without that reaction, and a platform that already went out is never
-  retried. TikTok is the exception and says so: until the app is audited its
+  retried. `AUTOPOST` in `.env.local` is an allow-list of the platforms it may
+  post to, so working credentials alone never start publishing anywhere. TikTok is the exception and says so: until the app is audited its
   API can only push a draft to the app inbox, so it reports `drafted` and the
   last step stays manual. LinkedIn is held to the cadence below automatically.
 - Cadence (evidence in the strategy document): Instagram / TikTok / Shorts

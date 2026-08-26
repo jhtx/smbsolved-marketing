@@ -17,14 +17,23 @@
 import './env';
 import { rmSync, writeFileSync } from 'node:fs';
 import { WebClient } from '@slack/web-api';
+import { autopostAllows, type Platform } from './delivery';
 import { hostPublicly } from './post/host';
 
 type State = 'pass' | 'fail' | 'todo';
-type Check = { name: string; state: State; detail: string; next?: string };
+type Check = { name: string; state: State; detail: string; next?: string; platform?: Platform };
 
 const results: Check[] = [];
 const add = (name: string, state: State, detail: string, next?: string) =>
-  results.push({ name, state, detail, next });
+  results.push({ name, state, detail, next, platform: PLATFORM_OF[name] });
+
+/** Which checks correspond to a posting platform, for the AUTOPOST note. */
+const PLATFORM_OF: Record<string, Platform | undefined> = {
+  Instagram: 'instagram',
+  YouTube: 'youtube',
+  LinkedIn: 'linkedin',
+  TikTok: 'tiktok',
+};
 
 const missing = (...keys: string[]) => keys.filter((k) => !process.env[k]?.trim());
 
@@ -229,7 +238,10 @@ async function main() {
   const width = Math.max(...results.map((r) => r.name.length));
   console.log('');
   for (const r of results) {
-    console.log(`  ${ICON[r.state]}  ${r.name.padEnd(width)}  ${r.detail}`);
+    // Working credentials and permission to use them are separate questions,
+    // and a row that says only PASS would hide the second one.
+    const held = r.platform && !autopostAllows(r.platform) ? '  [held: not in AUTOPOST, you post it by hand]' : '';
+    console.log(`  ${ICON[r.state]}  ${r.name.padEnd(width)}  ${r.detail}${held}`);
     if (r.next) console.log(`        ${' '.repeat(width)}  → ${r.next}`);
   }
 
@@ -239,6 +251,7 @@ async function main() {
     `\n  ${results.filter((r) => r.state === 'pass').length} working, ${broken.length} broken, ${todo.length} not set up yet.`,
   );
   if (todo.length) console.log('  Anything not set up posts by hand, and the Slack message says so.');
+  if (process.env.AUTOPOST?.trim()) console.log(`  AUTOPOST=${process.env.AUTOPOST.trim()} — only those post on a ✅.`);
   if (broken.length) console.log('  Fix the broken ones, then: npm run poll -- --retry');
   process.exit(broken.length ? 1 : 0);
 }

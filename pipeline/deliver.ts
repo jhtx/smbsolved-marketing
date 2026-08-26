@@ -57,7 +57,7 @@ export function postCopy(reel: Reel): string {
     ...automation().map((a) =>
       a.ready
         ? `• ${LABEL[a.platform]} — ${a.note}`
-        : `• ${LABEL[a.platform]} — *by hand* (${a.missing.join(', ')} not set)`,
+        : `• ${LABEL[a.platform]} — *by hand* (${a.why})`,
     ),
     '',
     'Posting by hand instead? Instagram: Advanced settings → turn OFF auto-captions, ours are burned in.',

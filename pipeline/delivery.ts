@@ -81,6 +81,25 @@ export function allRecords(): DeliveryRecord[] {
 }
 
 /**
+ * Which platforms the approval reaction may post to.
+ *
+ * Unset means every platform that has working credentials. A list restricts it
+ * to those named. It is an allow-list rather than a block-list on purpose:
+ * having credentials for a platform should never be enough, on its own, to
+ * start publishing there. Owner's decision 2026-08-25 keeps LinkedIn out of it
+ * while that account is warmed up by hand.
+ */
+export function autopostAllows(p: Platform): boolean {
+  const raw = process.env.AUTOPOST?.trim();
+  if (!raw) return true;
+  return raw
+    .split(/[,\s]+/)
+    .filter(Boolean)
+    .map((x) => x.toLowerCase())
+    .includes(p);
+}
+
+/**
  * Platforms still to try: nothing recorded, or a failure with tries left.
  * Anything that reached `posted`, `drafted` or `skipped` is never touched
  * again, which is what makes a poll every ten minutes safe.
