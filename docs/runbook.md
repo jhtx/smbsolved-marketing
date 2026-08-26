@@ -88,7 +88,11 @@ says exactly which cells disagree.
   channel a token actually controls.
 - LinkedIn's credential is a 60-day access token, not a refresh token. The
   poller warns in Slack a week out; `npm run authorize -- linkedin` renews it.
-- `AUTOPOST=youtube,instagram` holds LinkedIn and TikTok back from automatic
+- Facebook posts Reels to the SMB Solved Page with its own Page token. A USER
+  token has the same permissions and cannot post; `npm run doctor` tells them
+  apart, and `npm run authorize -- facebook --from-user-token` trades one for
+  the other. On Facebook's consent screen the Page must be ticked explicitly.
+- `AUTOPOST=youtube,instagram` holds Facebook, LinkedIn and TikTok back from automatic
   posting even though LinkedIn's credentials work. Add a platform to that list
   to hand it over; `npm run doctor` shows which are held.
 - Analytics cover Instagram and YouTube only. LinkedIn has no analytics API

@@ -33,6 +33,7 @@ export type Delivered = {
 const LABEL = {
   youtube: 'YouTube Shorts',
   instagram: 'Instagram Reels',
+  facebook: 'Facebook Reels (SMB Solved page)',
   linkedin: 'LinkedIn (personal)',
   tiktok: 'TikTok',
 } as const;

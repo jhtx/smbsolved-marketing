@@ -1,8 +1,8 @@
 # CLAUDE.md
 
 Short-form Excel tutorial reels for accountants, published under the handle
-**smbsolved** on Instagram / TikTok / YouTube Shorts, and on LinkedIn from the
-founder's personal profile. The channel exists to build authority that funnels
+**smbsolved** on Instagram / TikTok / YouTube Shorts, on the SMB Solved
+Facebook Page, and on LinkedIn from the founder's personal profile. The channel exists to build authority that funnels
 into SMB Solved (fractional controller + internal tools) and Steda (fixed-asset
 register for QuickBooks).
 

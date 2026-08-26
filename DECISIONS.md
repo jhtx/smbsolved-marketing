@@ -486,3 +486,38 @@ Confirmed by it on 2026-08-25: Instagram @smbsolved with publishing permission,
 YouTube bound to "SMB Solved" (@smbsolved) and pinned with YOUTUBE_CHANNEL_ID,
 LinkedIn posting as the founder personally (urn:li:person), not the company
 page that owns the app. The company page association is app ownership only.
+
+## 2026-08-25 — Facebook Reels on the SMB Solved Page, as a fifth platform
+Owner connected the Page to Instagram and asked whether the existing setup
+could post to both. It cannot, for two reasons worth writing down because both
+look like they should work:
+
+- Our Instagram token is the "Instagram API with Instagram Login" flavour on
+  graph.instagram.com, which has no Facebook Page endpoints at all. Page access
+  needs a token on graph.facebook.com.
+- Instagram's in-app "share to Facebook" toggle does not apply to content
+  published through the Content Publishing API. And `share_to_feed`, which we
+  already send, is about the Instagram feed versus the Reels tab; it has
+  nothing to do with Facebook.
+
+So Facebook is its own poster with its own token, and the working Instagram
+integration is left alone. Migrating Instagram to the Facebook Login flavour to
+get one token for both was rejected: it re-authorises a proven path, changes
+hosts, and still needs separate publish calls per platform.
+
+`pipeline/post/facebook.ts` publishes to `/{page-id}/video_reels` in three
+phases, sending the bytes to rupload.facebook.com. It needs no public URL,
+unlike Instagram, so it does not depend on the GitHub release path. Every reel
+we render already meets the spec (9:16, 1080x1920, 3-90s, H.264). No App Review
+is required for a Page you administer, and a Page token derived from a
+long-lived user token does not expire.
+
+The trap, hit on the first attempt: a USER token carries the same three
+permissions, looks identical in `.env.local`, and cannot post. `assertPage()`
+proves the token is a Page by asking for `category`, a field Pages have and
+users do not, because comparing ids is not enough when someone has pasted their
+user id into FACEBOOK_PAGE_ID as well. Facebook also asks separately which
+Pages an app may use, and granting the permissions without ticking the Page
+leaves /me/accounts empty; both failures now name themselves.
+
+Facebook stays out of AUTOPOST until the owner says otherwise.

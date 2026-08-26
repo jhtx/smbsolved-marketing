@@ -5,7 +5,8 @@
  * that already succeeded is never retried, and nothing here decides on its own
  * that a reel is ready — poll.ts calls this only after seeing the ✅.
  *
- * Order is the one CLAUDE.md named: YouTube, Instagram, LinkedIn, TikTok.
+ * Order is the one CLAUDE.md named, with Facebook added beside Instagram:
+ * YouTube, Instagram, Facebook, LinkedIn, TikTok.
  */
 import '../env';
 import { basename } from 'node:path';
@@ -18,6 +19,7 @@ import {
   type Platform,
   type PostResult,
 } from '../delivery';
+import { facebook } from './facebook';
 import { hostPublicly, configured as hostConfigured } from './host';
 import { instagram } from './instagram';
 import { linkedin } from './linkedin';
@@ -25,7 +27,7 @@ import { tiktok } from './tiktok';
 import { now, type PostInput, type Poster } from './types';
 import { youtube } from './youtube';
 
-export const POSTERS: Poster[] = [youtube, instagram, linkedin, tiktok];
+export const POSTERS: Poster[] = [youtube, instagram, facebook, linkedin, tiktok];
 
 /** Platforms needing the MP4 to be reachable at a public URL. */
 const NEEDS_PUBLIC_URL: Platform[] = ['instagram'];
@@ -145,6 +147,8 @@ export function automation(): { platform: Platform; ready: boolean; why: string;
       note:
         p.name === 'tiktok'
           ? 'draft pushed to your inbox, finish it in the app'
+          : p.name === 'facebook'
+            ? 'automatic, as a Reel on the Page'
           : p.name === 'linkedin'
             ? 'automatic, held to two a week and never two in 24h'
             : 'automatic',

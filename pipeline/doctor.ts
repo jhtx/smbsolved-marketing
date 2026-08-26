@@ -30,6 +30,7 @@ const add = (name: string, state: State, detail: string, next?: string) =>
 /** Which checks correspond to a posting platform, for the AUTOPOST note. */
 const PLATFORM_OF: Record<string, Platform | undefined> = {
   Instagram: 'instagram',
+  Facebook: 'facebook',
   YouTube: 'youtube',
   LinkedIn: 'linkedin',
   TikTok: 'tiktok',
@@ -169,6 +170,20 @@ async function youtube() {
   }
 }
 
+async function facebook() {
+  const gaps = missing('FACEBOOK_PAGE_ID', 'FACEBOOK_PAGE_TOKEN');
+  if (gaps.length) return add('Facebook', 'todo', `missing ${gaps.join(', ')}`, 'run: npm run authorize -- facebook');
+  try {
+    const { assertPage } = await import('./post/facebook');
+    const page = await assertPage();
+    add('Facebook', 'pass', `posts as the Page "${page.name}" (${page.id})`);
+  } catch (e) {
+    // The usual failure is a user token wearing a Page token's name, and
+    // assertPage already says so in one sentence.
+    add('Facebook', 'fail', (e as Error).message, 'run: npm run authorize -- facebook');
+  }
+}
+
 async function linkedin() {
   const gaps = missing('LINKEDIN_CLIENT_ID', 'LINKEDIN_CLIENT_SECRET', 'LINKEDIN_ACCESS_TOKEN');
   if (gaps.length) return add('LinkedIn', 'todo', `missing ${gaps.join(', ')}`, 'run: npm run authorize -- linkedin');
@@ -232,6 +247,7 @@ async function main() {
   await instagram();
   await github(quick);
   await youtube();
+  await facebook();
   await linkedin();
   await tiktok();
 

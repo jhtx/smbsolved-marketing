@@ -14,7 +14,7 @@
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const PLATFORMS = ['youtube', 'instagram', 'linkedin', 'tiktok'] as const;
+export const PLATFORMS = ['youtube', 'instagram', 'facebook', 'linkedin', 'tiktok'] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
 export type PostResult = {

@@ -5,6 +5,8 @@
  *
  *   npm run authorize -- youtube
  *   npm run authorize -- linkedin
+ *   npm run authorize -- facebook
+ *   npm run authorize -- facebook --from-user-token   (trade one you already hold)
  *   npm run authorize -- tiktok --paste
  *
  * `--paste` is for platforms that will not redirect to localhost: it prints
@@ -16,6 +18,8 @@
  *   youtube   upload + analytics read, in one consent so the nightly numbers
  *             pull does not need a second trip through this
  *   linkedin  w_member_social, to post to the founder's own profile
+ *   facebook  the three Pages permissions, then a trade: the token OAuth hands
+ *             back is a user token, and only a Page token can post to a Page
  *   tiktok    video.upload, which is drafts only until the app is audited
  */
 import '../env';
@@ -33,9 +37,15 @@ type Provider = {
   idEnv: string;
   secretEnv: string;
   /** where the long-lived credential is stored */
-  saveEnv: string;
+  saveEnv?: string;
   /** which field of the token response is the long-lived credential */
-  saveField: 'refresh_token' | 'access_token';
+  saveField?: 'refresh_token' | 'access_token';
+  /**
+   * Replaces the default "save one field" step for providers where the token
+   * you get is not the token you need. Facebook hands back a user token that
+   * has to be traded for a Page token.
+   */
+  finish?: (data: Record<string, string | number>, ctx: { clientId: string; secret: string }) => Promise<void>;
   extraAuth?: Record<string, string>;
   pkce?: boolean;
   defaultRedirect: string;
@@ -76,6 +86,17 @@ const PROVIDERS: Record<string, Provider> = {
     defaultRedirect: 'http://localhost:8723/callback',
     hint: 'developer.linkedin.com → your app. Auth tab: add this exact redirect URL. Products tab: "Share on LinkedIn" grants w_member_social, "Sign In with LinkedIn using OpenID Connect" grants openid and profile. invalid_scope_error means one of those products is missing; isolate it with --scope "openid profile" or --scope "w_member_social".',
   },
+  facebook: {
+    authUrl: 'https://www.facebook.com/v25.0/dialog/oauth',
+    tokenUrl: 'https://graph.facebook.com/v25.0/oauth/access_token',
+    scope: 'pages_show_list pages_read_engagement pages_manage_posts',
+    idParam: 'client_id',
+    idEnv: 'FACEBOOK_APP_ID',
+    secretEnv: 'FACEBOOK_APP_SECRET',
+    defaultRedirect: 'http://localhost:8723/callback',
+    finish: facebookFinish,
+    hint: 'developers.facebook.com → your app → Facebook Login → Settings → Valid OAuth Redirect URIs must contain this exact URL. On the consent screen you MUST tick the SMB Solved Page: a token with the permissions but no Page granted returns an empty page list and cannot post.',
+  },
   tiktok: {
     authUrl: 'https://www.tiktok.com/v2/auth/authorize/',
     tokenUrl: 'https://open.tiktokapis.com/v2/oauth/token/',
@@ -90,6 +111,71 @@ const PROVIDERS: Record<string, Provider> = {
     hint: 'developers.tiktok.com → your app → Login Kit. TikTok will not accept a localhost redirect, so register an https URL you control and run this with --paste.',
   },
 };
+
+/**
+ * Facebook's OAuth returns a short-lived USER token, which cannot post to a
+ * Page. The Page token is two steps further on: trade it for a long-lived user
+ * token, then read the Page tokens off /me/accounts. Page tokens derived this
+ * way do not expire, so this runs once and never again.
+ */
+async function facebookFinish(
+  data: Record<string, string | number>,
+  ctx: { clientId: string; secret: string },
+): Promise<void> {
+  const V = process.env.FACEBOOK_API_VERSION?.trim() || 'v25.0';
+  const G = `https://graph.facebook.com/${V}`;
+  const short = String(data.access_token ?? '');
+
+  const ll = (await (
+    await fetch(
+      `${G}/oauth/access_token?grant_type=fb_exchange_token&client_id=${encodeURIComponent(ctx.clientId)}` +
+        `&client_secret=${encodeURIComponent(ctx.secret)}&fb_exchange_token=${encodeURIComponent(short)}`,
+    )
+  ).json()) as { access_token?: string; error?: { message: string } };
+  const userToken = ll.access_token ?? short;
+  if (ll.error) console.log(`(could not extend the user token: ${ll.error.message}; continuing with the short one)`);
+
+  await pageFromUserToken(userToken);
+}
+
+type FbPage = { id: string; name: string; category?: string; access_token?: string };
+
+/**
+ * Reads the Page tokens off a user token and writes the chosen one. Separate
+ * from the OAuth flow because it is also the whole fix when someone already
+ * has a user token and only needs to trade it, with no app secret involved.
+ */
+export async function pageFromUserToken(userToken: string): Promise<void> {
+  const V = process.env.FACEBOOK_API_VERSION?.trim() || 'v25.0';
+  const G = `https://graph.facebook.com/${V}`;
+  const accounts = (await (
+    await fetch(`${G}/me/accounts?fields=id,name,category,access_token&access_token=${encodeURIComponent(userToken)}`)
+  ).json()) as { data?: FbPage[]; error?: { message: string } };
+  if (accounts.error) throw new Error(`Facebook: ${accounts.error.message}`);
+
+  const pages = (accounts.data ?? []).filter((p) => p.access_token);
+  if (!pages.length)
+    throw new Error(
+      'that token carries the permissions but no Page. Facebook asks separately which Pages an app may use, and none ' +
+        'were granted. Go through the consent again and tick SMB Solved. If the Page belongs to a Business portfolio, ' +
+        'the app also has to be added to that portfolio with access to the Page.',
+    );
+
+  let chosen = pages[0];
+  if (pages.length > 1) {
+    pages.forEach((p, i) => console.log(`  ${i + 1}. ${p.name}${p.category ? ` (${p.category})` : ''} — ${p.id}`));
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    const pick = Number((await rl.question(`Which Page should reels post to? [1-${pages.length}] `)).trim());
+    rl.close();
+    if (!Number.isInteger(pick) || pick < 1 || pick > pages.length) throw new Error('no Page chosen');
+    chosen = pages[pick - 1];
+  }
+
+  setEnvLocal('FACEBOOK_PAGE_ID', chosen.id);
+  setEnvLocal('FACEBOOK_PAGE_TOKEN', chosen.access_token!);
+  console.log(`
+Facebook Page set to "${chosen.name}" (${chosen.id}). Page tokens do not expire.`);
+}
 
 const args = process.argv.slice(2);
 const name = args.find((a) => !a.startsWith('--')) ?? '';
@@ -148,6 +234,20 @@ async function main() {
       `usage: authorize.ts <${Object.keys(PROVIDERS).join('|')}> [--paste] [--redirect <url>] [--scope "<space separated>"]`,
     );
     process.exit(1);
+  }
+
+  // Facebook only: trade a user token you already hold for the Page token,
+  // no app secret and no browser round trip.
+  if (name === 'facebook' && flag('--from-user-token')) {
+    const given = opt('--from-user-token');
+    let userToken = given && !given.startsWith('--') ? given : process.env.FACEBOOK_PAGE_TOKEN?.trim();
+    if (!userToken) {
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
+      userToken = (await rl.question('Paste the user access token: ')).trim();
+      rl.close();
+    }
+    await pageFromUserToken(userToken);
+    return;
   }
 
   const clientId = need(provider.idEnv, name);
@@ -213,12 +313,17 @@ async function main() {
     body,
   });
   const data = (await res.json()) as Record<string, string | number>;
-  const token = data[provider.saveField];
+  if (provider.finish) {
+    if (data.error) throw new Error(`${name} token exchange failed: ${JSON.stringify(data).slice(0, 400)}`);
+    await provider.finish(data, { clientId, secret });
+    return;
+  }
+  const token = data[provider.saveField!];
   if (typeof token !== 'string' || !token) {
     throw new Error(`${name} token exchange failed: ${JSON.stringify(data).slice(0, 400)}`);
   }
 
-  setEnvLocal(provider.saveEnv, token);
+  setEnvLocal(provider.saveEnv!, token);
   console.log(`\n${provider.saveEnv} written to .env.local.`);
   if (provider.saveField === 'access_token' && typeof data.expires_in === 'number')
     console.log(`This one expires in ${Math.round(Number(data.expires_in) / 86400)} days. Run this again before then.`);
