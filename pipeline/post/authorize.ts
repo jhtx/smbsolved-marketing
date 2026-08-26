@@ -163,6 +163,10 @@ async function main() {
       : {}),
   });
 
+  // Printed on its own line because "redirect_uri does not match the
+  // registered value" is the most common failure here, and the fix is to
+  // paste this string into the app config character for character.
+  console.log(`\nredirect_uri being sent (must match the app config EXACTLY):\n  ${redirect}`);
   console.log(`\nOpen this and approve as the smbsolved account:\n\n${provider.authUrl}?${params}\n`);
   if (provider.hint) console.log(`(app setup: ${provider.hint})\n`);
 
