@@ -568,3 +568,45 @@ days and nobody was reading it, so the runbook now says to look there first.
 
 First reel to publish itself end to end: 006, on 2026-08-27, to YouTube,
 Instagram and the Facebook Page.
+
+## 2026-08-31 — A cell may display one thing and store another (`stored`)
+
+Reel 016 (LEFT on a date cell returns 46) parked after all three writer
+attempts and cost a dollar for nothing. The reviewer's blocking finding was
+right and the writer could never have satisfied it:
+
+> Column A shows the raw serials (46031, 46044...) and the narration says so
+> out loud. If the viewer is already looking at 46031, getting 46 back from
+> LEFT is not a surprise, it's arithmetic. The version accountants actually
+> hit is a column that *displays* as dates while LEFT still returns 46.
+
+A data cell had exactly two settings in `recalc.ps1`: `@`, digits stored as
+text the way a GL export delivers them, or `General`. Neither can hold a date.
+Show `01/09/2026` and it goes in as text, so `LEFT` returns `01` — which is
+the error attempt 1 died on. Store `46031` so `LEFT` returns `46` and the
+sheet shows `46031`, which is attempt 3's blocker. The topic was unbuildable,
+and every retry would have parked again at the same price.
+
+So `rows[].stored` now carries what Excel holds behind the text on screen,
+keyed by column: `{ "a": { "value": "46031", "fmt": "mm/dd/yyyy" } }`. `a`
+stays the visible string, `value` goes into Excel under `fmt`.
+
+This widens the gate rather than loosening it. `expectText` rides along on the
+job and `recalc.ps1` reads back what Excel renders, so a reel that claims a
+display Excel does not produce fails exactly like a wrong `expected` — proved
+by claiming `01/10/2026` for serial 46031 and by a `dd-mmm-yy` format, both
+rejected with the cell named. A numeric `stored` in column A must also set
+`right: true`: Excel right-aligns a real number, and a left-aligned number is
+the channel's own signal for text (001, 004). Verified in Excel 16.0.20326:
+A2 displays `01/09/2026`, `=LEFT(A2,2)` returns `46`,
+`=LEFT(TEXT(A2,"mm/dd/yyyy"),2)` returns `01`.
+
+Scope, deliberately narrow: `stored` is for reels where the gap between what a
+cell shows and what it holds IS the lesson. Ordinary amounts stay plain text
+in `b`. Both prompts say so, because a writer that reaches for it to make data
+look tidier has moved the reel away from something Excel can settle.
+
+The general point is the one the insert beat made in 2026-08-24: when the
+reviewer keeps asking for something true about Excel that the schema cannot
+express, that is a schema gap, not a writer that needs another attempt. Three
+attempts at a dollar apiece is the cost of finding that out late.

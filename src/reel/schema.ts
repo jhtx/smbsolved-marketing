@@ -23,6 +23,18 @@ export const CUES = [
 export const cueSchema = z.enum(CUES);
 export type Cue = z.infer<typeof cueSchema>;
 
+/**
+ * A cell whose stored value is not the text the viewer reads. `value` goes
+ * into Excel under the number format `fmt`; the column's visible string stays
+ * in `a` / `b` / `c` and the gate makes Excel prove it displays that.
+ */
+export const storedCellSchema = z.object({
+  /** what Excel holds, as a string. "46031" for a date serial */
+  value: z.string().min(1),
+  /** the Excel number format that renders it, e.g. "mm/dd/yyyy" */
+  fmt: z.string().min(1),
+});
+
 /** One spreadsheet row. `a` and `b` are the visible columns. */
 export const rowSchema = z.object({
   n: z.number().int().min(1).max(20),
@@ -40,6 +52,29 @@ export const rowSchema = z.object({
   c: z.string().default(''),
   /** which stagger group this row reveals with */
   group: z.enum(['top', 'bottom', 'none']).default('top'),
+  /**
+   * What Excel STORES behind the text on screen, for the cells where the two
+   * differ. Keyed by data column; omit it and the cell holds what it shows,
+   * which is the normal case.
+   *
+   * A date column out of a GL export is what this exists for. The cell shows
+   * 01/09/2026 and holds the serial 46031, which is precisely why LEFT(A2,2)
+   * returns "46" and why reformatting the column as Text never fixes it.
+   * Without it a reel could show the date or get the serial's behaviour,
+   * never both. See DECISIONS.md 2026-08-31.
+   *
+   * `value` is typed into Excel under the number format `fmt`, and the gate
+   * then holds Excel to DISPLAYING exactly the string in `a` / `b` / `c`. A
+   * format that renders differently than the reel claims is an error, the
+   * same way a formula result that differs from `expected` is.
+   */
+  stored: z
+    .object({
+      a: storedCellSchema.optional(),
+      b: storedCellSchema.optional(),
+      c: storedCellSchema.optional(),
+    })
+    .optional(),
 });
 
 /** One line of narration. Drives both the caption and the animation timing. */

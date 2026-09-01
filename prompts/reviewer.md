@@ -65,6 +65,18 @@ block. You are checking the words and the judgment around them.
     the numbers and the rewritten formula, so do not re-derive those; check
     that the words match what the viewer will see happen.
 
+14. **Cells that display other than they store.** A row may carry `stored`,
+    which puts a value in Excel under a number format while the sheet shows
+    something else: `a` reads `01/09/2026`, Excel holds the serial `46031`.
+    That exists so a date reel can show a real date and still have `LEFT`
+    return `46` — the contradiction the viewer is meant to feel. The gate has
+    already made Excel prove the display, so do not re-derive it. What is
+    yours: whether the narration describes what is actually on screen (a
+    reel showing dates must not say "five digit numbers"), and whether the
+    reel needed `stored` at all. Ask for it when a sheet shows its own answer
+    away — raw serials on screen make `LEFT` returning 46 arithmetic rather
+    than a surprise.
+
 ## Severity
 
 - `blocking`: a false claim, a missing version caveat the viewer will hit, two

@@ -50,6 +50,27 @@ losing time to something specific. Assume they know what VLOOKUP is.
     `"Cintas\u00a0Corporation"`. Nothing else. `\b`, `\f`, `\t` are control
     characters, not invisible spaces, and the gate rejects them.
 
+13. **A cell can display one thing and store another** — use `stored` when the
+    gap between the two IS the lesson. A date out of a GL export is the case:
+    the column reads `01/09/2026` while Excel holds the serial `46031`, which
+    is exactly why `LEFT(A2,2)` gives `46` and why reformatting the column as
+    Text never fixes it.
+
+    ```
+    { "n": 2, "a": "01/09/2026", "b": "", "right": true,
+      "stored": { "a": { "value": "46031", "fmt": "mm/dd/yyyy" } } }
+    ```
+
+    `a` stays the text on screen. `value` is what Excel holds and `fmt` is the
+    number format that renders it, and the gate makes Excel prove the two
+    agree: a format that displays anything other than `a` is an error, exactly
+    like a wrong `expected`. Set `right: true` with it, because Excel
+    right-aligns a real number and the sheet must not say otherwise.
+
+    Use it only where the reel turns on the difference. An ordinary amount
+    column needs nothing — write `1,240.50` in `b` and move on. Never use it
+    to dress up a value the formula does not actually read.
+
 ## Reels where the sheet changes under the formula
 
 Most reels show a formula that was wrong from the first frame. Some topics are

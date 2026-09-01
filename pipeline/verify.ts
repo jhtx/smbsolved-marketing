@@ -11,6 +11,8 @@
  *      build machine). The sheet is written into a scratch workbook with the
  *      formulas and no cached values, Excel computes, and what Excel DISPLAYS
  *      must equal `expected` character for character — including error values.
+ *      A row carrying `stored` is checked the same way: Excel holds the serial
+ *      and has to render exactly the text the sheet puts on screen.
  *      Excel also hands back the formula as it stored it; if that differs from
  *      what the script typed (auto-closed parenthesis, inserted `@`), that is
  *      an error too, because the viewer will see the typed text.
@@ -69,6 +71,29 @@ export function verify(raw: unknown, opts: { structureOnly?: boolean } = {}): Ve
     for (const ref of Object.values(reel.sheet.alignment))
       if (!cellExists(ref))
         f.push({ level: 'error', message: `alignment cell ${ref} is not rendered` });
+
+  // --- cells that display other than they store -----------------------------
+  // Excel is held to the display down in recalc(). Up here the sheet has to be
+  // coherent to begin with: something visible to hold Excel to, and an
+  // alignment that agrees with what Excel does to a real number.
+  {
+    const numeric = (s: string) => s.trim() !== '' && Number.isFinite(Number(s));
+    for (const r of reel.sheet.rows)
+      for (const key of DATA_KEYS) {
+        const s = r.stored?.[key];
+        if (!s) continue;
+        if (!r[key])
+          f.push({
+            level: 'error',
+            message: `row ${r.n} column ${key.toUpperCase()}: stores ${s.value} but shows nothing, so there is no display to verify`,
+          });
+        if (key === 'a' && numeric(s.value) && !r.right)
+          f.push({
+            level: 'error',
+            message: `row ${r.n}: column A stores the number ${s.value}, which Excel right-aligns. Set right: true, or the sheet contradicts the alignment lesson from 001.`,
+          });
+      }
+  }
 
   for (const key of ['before', 'after'] as const) {
     const fm = reel.formulas[key];
@@ -275,7 +300,10 @@ export function verify(raw: unknown, opts: { structureOnly?: boolean } = {}): Ve
  *
  * Two comparisons for a plain reel: the broken formula, then the fix.
  *
- * Three for a mutation reel, because there are three moments on screen — the
+ * Data cells are compared too, wherever a row declares `stored`: the reel says
+ * A2 reads 01/09/2026 while Excel holds 46031, and Excel settles it.
+ *
+ * Three formula checks for a mutation reel, because there are three moments on screen — the
  * formula working in the original sheet, the same formula after Excel shifted
  * and rewrote it during the insert, and the fix. The middle one is the whole
  * lesson, and its `formulaReadback` is compared against `textAfter`: Excel
@@ -349,6 +377,16 @@ function recalc(reel: Reel): VerifyResult {
             : `${c.where}: isError is ${c.isError} but Excel ${got.isError ? 'returned an error value' : 'returned a normal value'}`,
       });
   }
+
+  // A cell that claims to display one thing while storing another is held to
+  // the claim. Get this wrong and the viewer reads a date that Excel never
+  // showed, which is the same failure as a wrong `expected`.
+  for (const d of report.display)
+    if (d.text !== d.expected)
+      out.push({
+        level: 'error',
+        message: `sheet cell ${d.ref}: the reel shows "${d.expected}" but Excel ${report.excel} displays "${d.text}" for the value it stores. Fix the number format or the text.`,
+      });
 
   if (out.length) return { findings: out };
   return {

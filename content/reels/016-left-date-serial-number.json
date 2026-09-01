@@ -1,0 +1,224 @@
+{
+  "id": "016",
+  "slug": "left-date-serial-number",
+  "title": "LEFT on a posting date returns 46 instead of the month",
+  "hook": {
+    "lead": "46",
+    "body": "where the month\nshould be"
+  },
+  "payoff": {
+    "headline": "FORMAT\nIS A MASK",
+    "sub": "Wrap the date in TEXT and you get characters you can actually slice."
+  },
+  "sheet": {
+    "rows": [
+      {
+        "n": 1,
+        "a": "Post Date",
+        "b": "Month",
+        "hdr": true,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 2,
+        "a": "03/09/2026",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "top",
+        "stored": {
+          "a": {
+            "value": "46090",
+            "fmt": "mm/dd/yyyy"
+          }
+        }
+      },
+      {
+        "n": 3,
+        "a": "03/17/2026",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "top",
+        "stored": {
+          "a": {
+            "value": "46098",
+            "fmt": "mm/dd/yyyy"
+          }
+        }
+      },
+      {
+        "n": 4,
+        "a": "03/24/2026",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "top",
+        "stored": {
+          "a": {
+            "value": "46105",
+            "fmt": "mm/dd/yyyy"
+          }
+        }
+      },
+      {
+        "n": 5,
+        "a": "03/31/2026",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "bottom",
+        "stored": {
+          "a": {
+            "value": "46112",
+            "fmt": "mm/dd/yyyy"
+          }
+        }
+      },
+      {
+        "n": 6,
+        "a": "04/07/2026",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "bottom",
+        "stored": {
+          "a": {
+            "value": "46119",
+            "fmt": "mm/dd/yyyy"
+          }
+        }
+      },
+      {
+        "n": 7,
+        "a": "04/14/2026",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "bottom",
+        "stored": {
+          "a": {
+            "value": "46126",
+            "fmt": "mm/dd/yyyy"
+          }
+        }
+      },
+      {
+        "n": 8,
+        "a": "04/30/2026",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "bottom",
+        "stored": {
+          "a": {
+            "value": "46142",
+            "fmt": "mm/dd/yyyy"
+          }
+        }
+      }
+    ],
+    "target": "B2",
+    "fillDown": {
+      "3": "03",
+      "4": "03",
+      "5": "03",
+      "6": "04",
+      "7": "04",
+      "8": "04"
+    }
+  },
+  "formulas": {
+    "before": {
+      "cell": "B2",
+      "text": "=LEFT(A2,2)",
+      "expected": "46",
+      "isError": false
+    },
+    "after": {
+      "cell": "B2",
+      "text": "=LEFT(TEXT(A2,\"mm/dd/yyyy\"),2)",
+      "expected": "03",
+      "isError": false
+    }
+  },
+  "script": [
+    {
+      "vo": "You want the month off a posting date. LEFT hands you 46.",
+      "cue": "hook"
+    },
+    {
+      "vo": "Posting dates straight out of the GL export.",
+      "caption": "Posting dates from the\nGL export.",
+      "cue": "revealTop"
+    },
+    {
+      "vo": "Two months of activity, and I need a month column beside it.",
+      "caption": "Two months of postings.\nI need a month column.",
+      "cue": "revealBottom"
+    },
+    {
+      "vo": "LEFT, two characters, off the date.",
+      "caption": "LEFT, two characters.",
+      "cue": "typeFormula"
+    },
+    {
+      "vo": "And out comes 46.",
+      "caption": "46. Not 03.",
+      "cue": "showError"
+    },
+    {
+      "vo": "Those are the first two digits of 46090, the serial number Excel actually holds in that cell. The date you're reading is only a format on top of it.",
+      "caption": "46090 is what the\ncell really holds.",
+      "cue": "markError"
+    },
+    {
+      "vo": "So build the text yourself first, then slice that.",
+      "caption": "Build the text first.\nThen slice it."
+    },
+    {
+      "vo": "TEXT with a date code, wrapped inside LEFT.",
+      "caption": "Wrap it in *TEXT*.",
+      "cue": "typeFix"
+    },
+    {
+      "vo": "03. That's the month, as real characters.",
+      "caption": "03. There's the month.",
+      "cue": "showResult"
+    },
+    {
+      "vo": "Fill it down and both months come out clean.",
+      "caption": "Fill down. All clean.",
+      "cue": "fillDown"
+    },
+    {
+      "vo": "A number format changes what you see. It never changes what's stored.",
+      "cue": "payoff"
+    }
+  ],
+  "post": {
+    "title": "LEFT on a date cell gives 46 instead of the month",
+    "description": "left function on a date returns the serial number instead of the month\nA date cell holds a serial number, so LEFT slices the serial and not the date you see. Wrap it in TEXT first, using a date code that matches your regional settings. Save this for close.",
+    "hashtags": [
+      "excel",
+      "accounting",
+      "exceltips",
+      "excelformulas",
+      "monthendclose"
+    ]
+  },
+  "verification": {
+    "excel": "16.0.20326",
+    "on": "2026-09-01",
+    "formulasHash": "9ffa80e2ab9566fd"
+  }
+}

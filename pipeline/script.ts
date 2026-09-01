@@ -28,6 +28,8 @@ import { reviewReel, formatReview, previousReels } from './review';
 /* (no regex/min/max/defaults; records as arrays; null for "omit")      */
 /* ------------------------------------------------------------------ */
 
+/** what Excel holds behind a cell whose display differs from it; null = it doesn't */
+const wStoredCell = z.object({ value: z.string(), fmt: z.string() }).nullable();
 const wRow = z.object({
   n: z.number(),
   a: z.string(),
@@ -38,6 +40,12 @@ const wRow = z.object({
   /** true = Excel holds a NUMBER in column A (renders right-aligned). false = text. */
   right: z.boolean(),
   group: z.enum(['top', 'bottom', 'none']),
+  /**
+   * For the cells where what Excel stores is not the text on screen: a date
+   * column reading 01/09/2026 while Excel holds the serial 46031, which is
+   * why LEFT() gets 46. null on every ordinary cell, which is nearly all.
+   */
+  stored: z.object({ a: wStoredCell, b: wStoredCell, c: wStoredCell }).nullable(),
 });
 const wFormula = z.object({
   cell: z.string(),
@@ -93,7 +101,12 @@ function toReel(w: WriterOut): unknown {
     payoff: w.payoff,
     sheet: {
       target: w.sheet.target,
-      rows: w.sheet.rows,
+      // `stored` is null on almost every row and null per column within it;
+      // the strict schema wants the key absent rather than empty.
+      rows: w.sheet.rows.map(({ stored, ...r }) => {
+        const s = stored ? strip(stored) : {};
+        return Object.keys(s).length ? { ...r, stored: s } : r;
+      }),
       fillDown: Object.fromEntries(w.sheet.fillDown.map((f) => [String(f.row), f.value])),
       ...(w.sheet.alignment ? { alignment: w.sheet.alignment } : {}),
       ...(w.sheet.mutation ? { mutation: w.sheet.mutation } : {}),

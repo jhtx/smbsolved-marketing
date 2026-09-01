@@ -2,7 +2,11 @@
 #
 # Invoked by pipeline/excel.ts. Reads a job file:
 #   {
-#     "cells":    [ { "ref": "A2", "value": "1042", "kind": "text" | "number" }, ... ],
+#     "cells":    [ { "ref": "A2", "value": "1042", "kind": "text" | "number" },
+#                  // a cell that displays other than it stores: Excel holds the
+#                  // serial under "numberFormat" and must render "expectText"
+#                  { "ref": "A2", "value": "46031", "kind": "number",
+#                    "numberFormat": "mm/dd/yyyy", "expectText": "01/09/2026" }, ... ],
 #     "formulas": [ { "key": "before", "cell": "B2", "text": "=VLOOKUP(...)", "numberFormat": "General" }, ... ],
 #
 #     // optional, mutation reels only: Excel inserts a column or a row AFTER
@@ -14,7 +18,9 @@
 #     "formulasAfter": [ { "key": "before", "cell": "C8", "text": "" }, ... ]
 #   }
 # Writes JSON to stdout:
-#   { "excel": "16.0.20326", "results": [ { key, cell, text, value, isError, errCode, formulaReadback, setError } ] }
+#   { "excel": "16.0.20326",
+#     "results": [ { key, cell, text, value, isError, errCode, formulaReadback, setError } ],
+#     "display": [ { ref, text, expected } ] }
 #
 # Why real Excel and not a JS formula engine: the channel lives on coercion
 # edge cases (text vs number, CHAR(160), dates-as-text). Only Excel is Excel.
@@ -31,7 +37,7 @@ $job = Get-Content -LiteralPath $JobPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
 $xl = $null
 $wb = $null
-$out = [ordered]@{ excel = $null; results = @() }
+$out = [ordered]@{ excel = $null; results = @(); display = @() }
 try {
   $xl = New-Object -ComObject Excel.Application
   $xl.Visible = $false
@@ -48,13 +54,25 @@ try {
   function Write-Cells($cells) {
     foreach ($c in $cells) {
       $r = $ws.Range($c.ref)
-      if ($c.kind -eq 'text') {
+      if ($c.numberFormat) {
+        # The cell displays something other than what it holds: a date serial
+        # under mm/dd/yyyy. LEFT() then reads the serial while the viewer reads
+        # the date, which is the whole lesson of that family of reels.
+        $r.NumberFormat = [string]$c.numberFormat
+        $num = 0.0
+        if ([double]::TryParse([string]$c.value, [ref]$num)) { $r.Value2 = $num } else { $r.Value2 = [string]$c.value }
+      } elseif ($c.kind -eq 'text') {
         $r.NumberFormat = '@'          # like a GL export: digits stored as text
         $r.Value2 = [string]$c.value
       } else {
         $r.NumberFormat = 'General'
         $num = 0.0
         if ([double]::TryParse([string]$c.value, [ref]$num)) { $r.Value2 = $num } else { $r.Value2 = [string]$c.value }
+      }
+      # A cell that claims a display is held to it, the same way a formula is
+      # held to `expected`. Constants need no calculation to read back.
+      if ($null -ne $c.expectText) {
+        $out.display += [ordered]@{ ref = $c.ref; text = [string]$r.Text; expected = [string]$c.expectText }
       }
     }
   }

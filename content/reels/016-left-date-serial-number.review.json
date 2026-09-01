@@ -1,0 +1,70 @@
+{
+  "verdict": "pass",
+  "findings": [
+    {
+      "severity": "minor",
+      "where": "formulas.after / script \"TEXT with a date code, wrapped inside LEFT.\"",
+      "issue": "TEXT(A2,\"mm\") returns \"03\" on its own, so wrapping it in LEFT is redundant. Accountants in the comments will say so, and it costs a little credibility on an otherwise clean reel.",
+      "fix": "Either keep LEFT and add half a clause acknowledging it (the point is that LEFT now has characters to slice), or make the fix the shorter TEXT code and let the payoff carry the serial lesson."
+    },
+    {
+      "severity": "minor",
+      "where": "script line 3, caption \"Two months of postings.\\nI need a month column.\"",
+      "issue": "Column B already has a \"Month\" header on screen, so saying you need a month column reads slightly off against what the viewer sees.",
+      "fix": "Say you need the month broken out of the date, not that you need the column."
+    },
+    {
+      "severity": "minor",
+      "where": "hook",
+      "issue": "\"46 where the month should be\" is the same shape as 006 (\"OPS where 12,480.00 was yesterday\"). Still specific and fine, just the second time this construction runs.",
+      "fix": "Optional: try a phrasing that leads with the action, e.g. the value that lands when you pull the month off a date."
+    },
+    {
+      "severity": "minor",
+      "where": "script \"03. That's the month, as real characters.\"",
+      "issue": "\"as real characters\" is a slightly technical tail for a spoken line.",
+      "fix": "Trim to something a controller would say out loud, e.g. \"03. That's the actual month.\""
+    }
+  ],
+  "hook": {
+    "score": 4,
+    "note": "Concrete symptom, six on-screen words, a number the viewer has actually seen in a month column. Loses a point only because the lead-plus-\"where\" construction has run before."
+  },
+  "claims": [
+    {
+      "claim": "A date cell holds a serial number and the date shown is a number format on top of it",
+      "verdict": "true",
+      "note": "Correct for Excel date values; the stored block matches (03/09/2026 = 46090)."
+    },
+    {
+      "claim": "LEFT(A2,2) returns the first two digits of the stored serial, not of the displayed date",
+      "verdict": "true",
+      "note": "LEFT coerces the number to its general text form, ignoring the cell's number format."
+    },
+    {
+      "claim": "Wrapping in TEXT produces characters LEFT can slice",
+      "verdict": "true",
+      "note": "TEXT returns a text string, so LEFT operates on the formatted date."
+    },
+    {
+      "claim": "\"A number format changes what you see. It never changes what's stored.\"",
+      "verdict": "true",
+      "note": "Accurate and correctly scoped to number formats, not to entered values."
+    },
+    {
+      "claim": "Post copy: \"using a date code that matches your regional settings\"",
+      "verdict": "true",
+      "note": "Correct caveat; TEXT format codes are locale-dependent, and narration stays vague enough not to overreach."
+    },
+    {
+      "claim": "Fill-down months 03/03/03/04/04/04 for rows 3-8",
+      "verdict": "true",
+      "note": "Matches the displayed dates in column A."
+    },
+    {
+      "claim": "No function used requires a modern Excel version",
+      "verdict": "true",
+      "note": "LEFT and TEXT exist in every supported build, so no version caveat is owed."
+    }
+  ]
+}

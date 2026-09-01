@@ -33,7 +33,7 @@ Target three to four a week. Keep this list ten deep or the pipeline starves.
       <https://stackoverflow.com/questions/79901159/how-to-use-countifs-to-count-referenced-cell-and-another-that-includes-a-value> · Bank feed and GL memo fields almost never hold the vendor name alone, so this fires constantly in real exports. (high)
 - [x] **008** [general] You typed the formula once and dragged it, and every
       row points at the wrong cells → lock the range with $ (F4)
-- [ ] **016** [controller] LEFT on a date cell gives you 4531 instead of the month, even after you formatted the column as Text → Formatting does not change the stored serial number; use =TEXT(A2,"mm/dd/yyyy") before slicing it
+- [x] **016** [controller] LEFT on a date cell gives you 4531 instead of the month, even after you formatted the column as Text → Formatting does not change the stored serial number; use =TEXT(A2,"mm/dd/yyyy") before slicing it
       <https://stackoverflow.com/questions/79966942/why-doesnt-changing-a-cell-format-to-text-convert-existing-date-time-values-to> · It is the mirror image of the text-dates problem and explains the one thing everyone gets wrong about the Text format. (high)
 - [ ] **017** [owner] Your tiered markup formula returns 0 for every amount over 500 → Excel will not chain 500<C2<1000; use AND(C2>=500,C2<1000) or order the IF thresholds high to low
       <https://stackoverflow.com/questions/79962195/how-can-we-fix-the-formula-we-have-a-problem-when-c2-is-more-than-500-the-ce> · Chained comparisons look like math class and silently evaluate to nonsense, which is a satisfying one-line reveal. (high)

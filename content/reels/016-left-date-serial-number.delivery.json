@@ -1,0 +1,16 @@
+{
+  "stem": "016-left-date-serial-number",
+  "reelPath": "content/reels/016-left-date-serial-number.json",
+  "mp4": "out/016-left-date-serial-number.mp4",
+  "stills": [
+    "C:\\projects\\smbsolved-marketing\\out\\016-left-date-serial-number-hook.png",
+    "C:\\projects\\smbsolved-marketing\\out\\016-left-date-serial-number-result.png"
+  ],
+  "deliveredAt": "2026-09-01T03:26:39.688Z",
+  "slack": {
+    "channel": "C0BPQRPQMK5",
+    "ts": "1788233198.914209",
+    "permalink": "https://smb-solved.slack.com/archives/C0BPQRPQMK5/p1788233198914209"
+  },
+  "posts": {}
+}

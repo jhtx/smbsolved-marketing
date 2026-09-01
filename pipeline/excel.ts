@@ -15,9 +15,23 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { Reel } from '../src/reel/schema';
-import { DATA_KEYS, initialDataKeys, initialRef, initialRows, insertedColumn, insertedRow } from '../src/reel/sheet';
+import { DATA_KEYS, initialDataKeys, initialRef, initialRows, insertedColumn, insertedRow, type DataKey } from '../src/reel/sheet';
 
-export type ExcelCell = { ref: string; value: string; kind: 'text' | 'number' };
+type Row = Reel['sheet']['rows'][number];
+
+export type ExcelCell = {
+  ref: string;
+  value: string;
+  kind: 'text' | 'number';
+  /**
+   * Number format for a cell whose display differs from what it stores (a date
+   * serial under "mm/dd/yyyy"). When set it decides the format outright, so
+   * `kind` no longer does.
+   */
+  numberFormat?: string;
+  /** the text the reel puts on screen for this cell; Excel is held to it */
+  expectText?: string;
+};
 export type ExcelFormula = { key: string; cell: string; text: string; numberFormat?: string };
 /**
  * The sheet change a mutation reel makes, performed by Excel itself between
@@ -55,7 +69,9 @@ export type ExcelResult = {
   /** COM exception while setting the formula (hard syntax error) */
   setError: string | null;
 };
-export type ExcelReport = { excel: string; results: ExcelResult[] };
+/** A data cell the reel claims displays one thing while storing another. */
+export type ExcelDisplay = { ref: string; text: string | null; expected: string };
+export type ExcelReport = { excel: string; results: ExcelResult[]; display: ExcelDisplay[] };
 
 const SCRIPT = resolve(import.meta.dirname ?? __dirname, 'excel', 'recalc.ps1');
 
@@ -68,6 +84,22 @@ const isNumeric = (s: string) => s.trim() !== '' && Number.isFinite(Number(s));
  */
 const kindFor = (key: string, value: string, right: boolean): 'text' | 'number' =>
   key === 'a' ? (right && isNumeric(value) ? 'number' : 'text') : isNumeric(value) ? 'number' : 'text';
+
+/**
+ * One data cell of the job.
+ *
+ * A row that declares `stored` for this column overrides both halves: Excel
+ * holds that value under that number format, and the text the sheet shows
+ * rides along as `expectText` so the gate can hold Excel to displaying it.
+ * That is the only way a cell can read 01/09/2026 on screen while LEFT()
+ * still gets at the serial underneath (DECISIONS.md 2026-08-31).
+ */
+const cellFor = (row: Row, key: DataKey, ref: string): ExcelCell => {
+  const s = row.stored?.[key];
+  return s
+    ? { ref, value: s.value, kind: isNumeric(s.value) ? 'number' : 'text', numberFormat: s.fmt, expectText: row[key] }
+    : { ref, value: row[key], kind: kindFor(key, row[key], row.right) };
+};
 
 /**
  * Maps a reel's sheet + formulas onto a recalculation job.
@@ -91,7 +123,7 @@ export function jobFromReel(reel: Reel): ExcelJob {
     const cells: ExcelCell[] = [];
     for (const r of reel.sheet.rows)
       for (const key of ['a', 'b'] as const)
-        if (r[key]) cells.push({ ref: `${key.toUpperCase()}${r.n}`, value: r[key], kind: kindFor(key, r[key], r.right) });
+        if (r[key]) cells.push(cellFor(r, key, `${key.toUpperCase()}${r.n}`));
 
     const formulas: ExcelFormula[] = (['before', 'after'] as const).map((key) => ({
       key,
@@ -110,7 +142,7 @@ export function jobFromReel(reel: Reel): ExcelJob {
   // them, `keys[i]` is the data that renders at column i of the old sheet.
   for (const r of initialRows(reel))
     keys.forEach((key, i) => {
-      if (r[key]) cells.push({ ref: `${String.fromCharCode(65 + i)}${r.n}`, value: r[key], kind: kindFor(key, r[key], r.right) });
+      if (r[key]) cells.push(cellFor(r, key, `${String.fromCharCode(65 + i)}${r.n}`));
     });
 
   const initialCell = initialRef(reel, before.cell);
@@ -121,12 +153,12 @@ export function jobFromReel(reel: Reel): ExcelJob {
   if (mutation.kind === 'insertColumn') {
     const key = DATA_KEYS[mutation.at.charCodeAt(0) - 65];
     for (const r of reel.sheet.rows)
-      if (r[key]) newCells.push({ ref: `${mutation.at}${r.n}`, value: r[key], kind: kindFor(key, r[key], r.right) });
+      if (r[key]) newCells.push(cellFor(r, key, `${mutation.at}${r.n}`));
   } else {
     const row = reel.sheet.rows.find((r) => r.n === Number(mutation.at));
     if (row)
       DATA_KEYS.slice(0, 2).forEach((key, i) => {
-        if (row[key]) newCells.push({ ref: `${String.fromCharCode(65 + i)}${row.n}`, value: row[key], kind: kindFor(key, row[key], row.right) });
+        if (row[key]) newCells.push(cellFor(row, key, `${String.fromCharCode(65 + i)}${row.n}`));
       });
   }
 
@@ -172,7 +204,12 @@ export function recalcInExcel(job: ExcelJob): ExcelReport {
 
   const line = stdout.trim().split('\n').reverse().find((l) => l.trim().startsWith('{'));
   if (!line) throw new Error(`Excel recalculation produced no JSON:\n${stdout}`);
-  return JSON.parse(line) as ExcelReport;
+  const report = JSON.parse(line) as ExcelReport;
+  // ConvertTo-Json renders a one-element array as a bare object, and a sheet
+  // with a single `stored` cell is an ordinary reel, not an edge case.
+  const d = report.display as ExcelDisplay[] | ExcelDisplay | undefined;
+  report.display = Array.isArray(d) ? d : d ? [d] : [];
+  return report;
 }
 
 /** Whitespace- and case-insensitive formula equality (Excel normalises both). */

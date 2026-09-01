@@ -227,6 +227,11 @@ Locked. Changing any of this breaks recognizability across the channel.
 - TypeScript everywhere. One runtime, because Remotion requires Node anyway.
 - Reel JSON is validated by zod (`src/reel/schema.ts`). Schema is the contract
   between the writer and the renderer. Widen it deliberately, never ad hoc.
+- A row may carry `stored` when the gap between what a cell shows and what
+  Excel holds is the lesson (a date column that displays `01/09/2026` and
+  stores the serial `46031`, so `LEFT` returns `46`). The gate makes Excel
+  prove the display. Only where the reel turns on it; see `DECISIONS.md`
+  2026-08-31.
 - 1080x1920, 30fps.
 - Log decisions in `DECISIONS.md` when you change the grammar, the schema, the
   gate, or the scope. Append-only.
