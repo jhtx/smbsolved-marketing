@@ -1,0 +1,82 @@
+{
+  "verdict": "pass",
+  "findings": [
+    {
+      "severity": "minor",
+      "where": "hook.body / row 2 data",
+      "issue": "The hook says \"six hours cost more than seven\" but row 2 is 7.50 hours, not seven. A viewer reading the sheet sees 7.50 and the line is a beat off.",
+      "fix": "Either reword the body to \"six hours cost more\\nthan seven and a half\" or change A2 to 7.00 (B2 becomes 294.00) so the hook is literally what's on screen."
+    },
+    {
+      "severity": "minor",
+      "where": "script line 10 (fillDown vo)",
+      "issue": "\"F4 cycles the dollar signs\" is true on Windows Excel; on Mac it's Command+T (F4 only works if function keys are remapped). Small unqualified claim.",
+      "fix": "Either drop the F4 clause (the reel doesn't need it) or say \"F4 on Windows cycles the dollar signs.\""
+    },
+    {
+      "severity": "minor",
+      "where": "captions on revealTop and revealBottom",
+      "issue": "Two captions in a row with the same grammatical shape (bare noun-phrase fragments, comma list). Reads like a template.",
+      "fix": "Rewrite one as a full sentence a person would text, e.g. \"The rates live in a table\\nfurther down.\""
+    },
+    {
+      "severity": "minor",
+      "where": "sheet rows 7-10",
+      "issue": "A rate table used to multiply hours that includes Mileage at 0.67 (a per-mile rate) is a slight logical wobble, and the A7 label \"Rate table\" reads like a title dropped into a data cell.",
+      "fix": "Label A7 \"Rate type\" and consider swapping Mileage for a third labor rate (Shop, Subcontract) or leave Mileage but keep the header honest."
+    },
+    {
+      "severity": "minor",
+      "where": "payoff.sub vs final vo",
+      "issue": "\"Anything that shouldn't move needs dollar signs\" and \"If it shouldn't move, put dollar signs on it\" are the same sentence twice back to back.",
+      "fix": "Make the sub concrete instead of a restatement, e.g. \"The rate cell never moves. B8 stays B8.\""
+    },
+    {
+      "severity": "minor",
+      "where": "overall framing",
+      "issue": "Hours / labor cost is job costing rather than an accounting-system export, and the reel isn't tagged as the weekly [general] tip. Fine, but it's the generic side of the ground you claim.",
+      "fix": "If this fills the general slot, mark it as such; otherwise ground it as a job-cost sheet built from a time export (add a job or cost code column label in A1's row wording only, no schema change)."
+    }
+  ],
+  "hook": {
+    "score": 4,
+    "note": "\"378.00 / six hours cost more than seven\" is a real symptom, concrete, on-sheet, and under 10 words. It asks the viewer to do one step of arithmetic to feel the wrong, which costs a little punch; the 7.50 vs \"seven\" mismatch costs a little more. Fix that and it's a 5."
+  },
+  "claims": [
+    {
+      "claim": "Dragging =A2*B8 down one row makes it =A3*B9 (relative reference shifts one row per row)",
+      "verdict": "true",
+      "note": "Standard relative reference behaviour in every Excel version."
+    },
+    {
+      "claim": "6.00 hours at the overtime rate of 63.00 gives 378.00, more than 7.50 hours at 42.00 (315.00)",
+      "verdict": "true",
+      "note": "Arithmetic holds; also confirmed by the verification block."
+    },
+    {
+      "claim": "$B$8 locks both row and column so the reference doesn't move when filled down",
+      "verdict": "true",
+      "note": "Correct; column lock is redundant for a vertical fill but the reel says \"row and column, both\" as a habit, not as a necessity, which is fair."
+    },
+    {
+      "claim": "\"Drag it now and every row still reads B8\"",
+      "verdict": "true",
+      "note": "Confirmed by fillDown 8.25 * 42 = 346.50."
+    },
+    {
+      "claim": "\"F4 cycles the dollar signs\"",
+      "verdict": "overstated",
+      "note": "True on Windows Excel; Mac uses Command+T. Add \"on Windows\" or cut."
+    },
+    {
+      "claim": "Absolute references work in Excel 2016/2019 as shown",
+      "verdict": "true",
+      "note": "No modern-only function used, so no version caveat needed."
+    },
+    {
+      "claim": "Premise that the formula was right in row 2 and only broke on the drag",
+      "verdict": "true",
+      "note": "B2 = 315.00 is consistent with =A2*B8; no mutation block, so nothing to check against an insert."
+    }
+  ]
+}

@@ -27,11 +27,11 @@ Target three to four a week. Keep this list ten deep or the pipeline starves.
       column index is positional, use XLOOKUP or MATCH
 - [x] **007** [general] The #N/A error wrecks your whole report → wrap the
       lookup in IFERROR with an empty string
-- [ ] **012** [owner] Your VLOOKUP shows 0 where the source cell is actually empty, and the report reads like a real zero balance → Blank source cells return 0, so wrap it: =IF(VLOOKUP(...)="","",VLOOKUP(...)) or append &"" for text
+- [x] **012** [owner] Your VLOOKUP shows 0 where the source cell is actually empty, and the report reads like a real zero balance → Blank source cells return 0, so wrap it: =IF(VLOOKUP(...)="","",VLOOKUP(...)) or append &"" for text
       <https://superuser.com/questions/1934549/i-need-to-add-isblank-to-a-formula-but-not-sure-where-to-input-it-within-the-for> · A zero that means "no data" instead of "nothing owed" is the exact kind of lie an owner reads straight past. (high)
-- [ ] **015** [controller] COUNTIF on a vendor name returns 0 because the memo line has extra text wrapped around the name → Wildcards do not work inside a cell reference; concatenate them: =COUNTIFS(Data,"*"&C4&"*")
+- [x] **015** [controller] COUNTIF on a vendor name returns 0 because the memo line has extra text wrapped around the name → Wildcards do not work inside a cell reference; concatenate them: =COUNTIFS(Data,"*"&C4&"*")
       <https://stackoverflow.com/questions/79901159/how-to-use-countifs-to-count-referenced-cell-and-another-that-includes-a-value> · Bank feed and GL memo fields almost never hold the vendor name alone, so this fires constantly in real exports. (high)
-- [ ] **008** [general] You typed the formula once and dragged it, and every
+- [x] **008** [general] You typed the formula once and dragged it, and every
       row points at the wrong cells → lock the range with $ (F4)
 - [ ] **016** [controller] LEFT on a date cell gives you 4531 instead of the month, even after you formatted the column as Text → Formatting does not change the stored serial number; use =TEXT(A2,"mm/dd/yyyy") before slicing it
       <https://stackoverflow.com/questions/79966942/why-doesnt-changing-a-cell-format-to-text-convert-existing-date-time-values-to> · It is the mirror image of the text-dates problem and explains the one thing everyone gets wrong about the Text format. (high)
@@ -74,3 +74,18 @@ to keep the weekly mix at one general in three or four.*
   this account rather than a generic Excel one.
 - `[general]` reels: same grammar, same verification, hook for any office
   worker, everyday-but-real data allowed.
+
+## Mined 2026-08-30 (curate before promoting; give an item a **NNN** number to make it runnable)
+
+- [ ] **018** [general] AVERAGEIF gives you #DIV/0! even though the column is full of numbers → The error means zero rows matched the criteria, usually a trailing space or a spelling difference; test with COUNTIF and wrap the criteria in TRIM
+      <https://stackoverflow.com/questions/79942426/why-is-my-formula-consistently-returning-div-0> · People read #DIV/0! as a data problem when it is actually telling you the criteria matched nothing, and that reframe is a single clean reveal. (medium)
+- [ ] **019** [owner] You joined a label to a total and the amount came out 1234.5 instead of $1,234.50 → Concatenation drops the cell's number format; rebuild it with ="Total: "&TEXT(B2,"$#,##0.00")
+      <https://superuser.com/questions/1938790/displaying-the-results-of-a-excel-formula-with-two-different-number-formats> · Report headers and summary lines are where owners see naked numbers, and the one function fix is instantly visible in a before and after. (high)
+- [ ] **020** [controller] You built the tab name with & inside VLOOKUP and got an error instead of the month's data → A text string is not a range; wrap it in INDIRECT, as in =VLOOKUP(B1,INDIRECT("'"&A1&"'!A:D"),4,FALSE)
+      <https://stackoverflow.com/questions/79949659/vlookup-using-string-as-reference-sheet-name> · Anyone with one tab per period tries exactly this concatenation, and the reason it fails is one sentence. (high)
+- [ ] **021** [owner] Your COUNTIFS drops to 0 the moment the dropdown is set to All → Excel looks for the literal word All; feed it a wildcard instead: =COUNTIFS(Data[Owner],IF(C1="All","*",C1))
+      <https://stackoverflow.com/questions/79991909/i-am-creating-a-dynamic-formula-to-count-the-number-of-records-based-on-these-cr> · Every homemade dashboard has an All option that quietly returns nothing, and the wildcard swap fits in one cell. (medium)
+- [ ] **022** [controller] Your approved cost total is triple the real number because each contract has three billing lines → Sum the distinct contract amounts, not the rows: =SUM(UNIQUE(FILTER(Contracts[ID]&"|"&Contracts[Cost],...))) style dedupe, or SUMPRODUCT over UNIQUE contract keys
+      <https://stackoverflow.com/questions/79965909/using-unique-with-sumproduct> · Repeating header amounts across detail lines is the classic GL export trap and the inflated total looks plausible until you check it. (medium)
+- [ ] **023** [general] Your check pays out even though one of the five input cells is still empty → Stop nesting ANDs and count the entries: =IF(COUNT(B2:F2)=5,150,"")
+      <https://superuser.com/questions/1939222/how-to-populate-a-field-in-one-cell-if-5-other-cells-have-any-data-with-an-excel> · A completeness test written as five conditions is something everyone has typed, and collapsing it to COUNT is a satisfying one-line swap. (medium)

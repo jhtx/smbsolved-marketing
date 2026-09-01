@@ -38,10 +38,20 @@ const value = (n: string) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 
+/**
+ * stdout first, and the file write can never throw. This runs on the path to
+ * an outward-facing post, so losing a log line must never cost a post — which
+ * is exactly what happened when the scheduled task redirected its stdout into
+ * this same file and Windows locked it (fixed in register-poll-task.ps1).
+ */
 function log(line: string) {
-  mkdirSync('out/logs', { recursive: true });
-  appendFileSync('out/logs/poll.log', `${new Date().toISOString()} ${line}\n`);
   console.log(line);
+  try {
+    mkdirSync('out/logs', { recursive: true });
+    appendFileSync('out/logs/poll.log', `${new Date().toISOString()} ${line}\n`);
+  } catch (e) {
+    console.error(`(poll.log unwritable, continuing: ${(e as Error).message})`);
+  }
 }
 
 const slack = () => {

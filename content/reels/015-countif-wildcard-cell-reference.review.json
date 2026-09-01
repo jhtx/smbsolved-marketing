@@ -1,0 +1,70 @@
+{
+  "verdict": "pass",
+  "findings": [
+    {
+      "severity": "minor",
+      "where": "post.description, second line",
+      "issue": "House rule is search phrase, then one plain sentence, then hashtags. This is two sentences plus a save-this tail, which reads longer than the format allows.",
+      "fix": "Cut to one sentence, e.g. \"A cell reference inside quotes is just text to Excel, so put it outside and join it on with ampersands.\" Drop or shorten the save-this tail."
+    },
+    {
+      "severity": "minor",
+      "where": "hook / variety",
+      "issue": "Third reel whose hook is a zero result (002 \"totals zero\", 012 \"0.00 and nothing was ever reported\"). The situation is genuinely new but the shape of the hook line is getting familiar.",
+      "fix": "Lead on the mismatch rather than the number, e.g. \"Two CINTAS payments. COUNTIF says none.\" Keeps the symptom, changes the shape."
+    },
+    {
+      "severity": "minor",
+      "where": "script[5] caption \"Excel looked for A2 itself.\"",
+      "issue": "\"itself\" is doing vague work; the point is Excel searched the memos for the two characters A and 2.",
+      "fix": "Try \"Excel searched for the text A2.\" over \"Move A2 out of the quotes.\""
+    },
+    {
+      "severity": "minor",
+      "where": "script[8] \"every vendor gets a real count\"",
+      "issue": "COUNTIF counts memo rows that contain the name, not occurrences of the name. Fine for this data, slightly loose as a general statement.",
+      "fix": "Optional: \"every vendor gets its memo count\" or leave as is since the sheet has one hit per row."
+    }
+  ],
+  "hook": {
+    "score": 4,
+    "note": "Concrete, specific, a thing a controller has actually seen when tying a bank feed to a vendor list. Under 10 on-screen words. Loses a point only because the zero-result framing has been used twice before on this channel."
+  },
+  "claims": [
+    {
+      "claim": "A cell reference inside quotes is treated as literal text, so \"*A2*\" searches for the characters A2",
+      "verdict": "true",
+      "note": "Correct. COUNTIF criteria is a text string; A2 inside quotes is never resolved as a reference."
+    },
+    {
+      "claim": "None of the four memos contain the text A2, so the count is 0",
+      "verdict": "true",
+      "note": "Consistent with the data and the verified expected value."
+    },
+    {
+      "claim": "Asterisks still work as wildcards when concatenated outside the quotes",
+      "verdict": "true",
+      "note": "COUNTIF applies wildcard matching to the assembled criteria string regardless of how it was built."
+    },
+    {
+      "claim": "\"*\"&A2&\"*\" returns 2 for CINTAS",
+      "verdict": "true",
+      "note": "Rows 7 and 9 both contain CINTAS. Matches the verified value."
+    },
+    {
+      "claim": "Fill down gives GRAINGER 1 and FEDEX 1",
+      "verdict": "true",
+      "note": "Range is absolute, criteria reference is relative, one matching memo each."
+    },
+    {
+      "claim": "No version caveat needed",
+      "verdict": "true",
+      "note": "COUNTIF, wildcards and ampersand concatenation all work in 2016 and 2019."
+    },
+    {
+      "claim": "Payoff \"Inside the quotes, A2 is just two characters\"",
+      "verdict": "true",
+      "note": "Accurate and repeatable to a coworker."
+    }
+  ]
+}

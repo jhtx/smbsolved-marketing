@@ -1,6 +1,6 @@
 # Runbook
 
-What runs, when, and what Jimmy actually does. Current as of 2026-08-25.
+What runs, when, and what Jimmy actually does. Current as of 2026-08-27.
 Reasoning for every rule: `DECISIONS.md`.
 
 ## The machines
@@ -9,12 +9,31 @@ Reasoning for every rule: `DECISIONS.md`.
 |---|---|---|
 | `smbsolved-reels` | Weekdays 06:30 | Next numbered backlog item → writer → real-Excel gate → reviewer → Jimmy's voice → render + LinkedIn stills → OneDrive archive + Slack post in #social-media |
 | `smbsolved-reels-mine` | Sundays 17:00 | Stack Exchange + Reddit RSS → model distills candidates → appended under "## Mined" in the backlog + Slack notice |
-| `smbsolved-reels-poll` | Every 10 min (register with `scripts\register-poll-task.ps1`) | Looks for a ✅ on a delivered reel and posts it: YouTube Shorts, Instagram Reels, LinkedIn (held to the cadence), TikTok draft. Replies in the reel's Slack thread with what went where |
+| `smbsolved-reels-poll` | Every 10 min (register with `scripts\register-poll-task.ps1`) | Looks for a ✅ on a delivered reel and posts it to YouTube Shorts, Instagram Reels and the Facebook Page, then replies in the reel's Slack thread with the links. LinkedIn and TikTok are not in `AUTOPOST`, so it records them "post by hand" and never calls them |
 | `smbsolved-reels-analytics` | Daily 05:45 (register with `scripts\register-analytics-task.ps1`) | Instagram insights + YouTube statistics for reels posted in the last five weeks into out/analytics.db, copied to the OneDrive archive. The Sunday miner reads it |
 | `smbsolved-reels-newsletter` | Every other Monday 07:30 (register with `scripts\register-newsletter-task.ps1` if not yet) | Drafts The Tie-Out from the newest POSTED reels, Instagram permalinks filled, close note drafted for review → Kit draft broadcast + Slack |
 
 All five need the PC on (sleep is fine) and Jimmy logged in (lock screen is
 fine). A missed daily run pages via healthchecks → Slack.
+
+### Logs, and the one rule about them
+
+Everything lands in `out/logs`. Two scripts keep their own timestamped record
+(`run.ts` → `run.log`, `poll.ts` → `poll.log`); every task additionally
+captures its stdout to a file named for the task (`task.log`, `poll-task.log`,
+`mine.log`, `analytics.log`, `newsletter.log`).
+
+**A task's redirect target must never be the file its own script appends to.**
+`cmd.exe` holds the redirect open for the whole run, so pointing both at one
+name makes the script's own write fail with `EBUSY` on Windows. The poll task
+did exactly that for two days and every firing died between reading the ✅ and
+posting, with nothing in Slack to show for it. Reasoning in `DECISIONS.md`
+2026-08-27.
+
+When a scheduled job seems to do nothing, check
+`Get-ScheduledTaskInfo -TaskName <name>` first. `LastTaskResult` of 0 is a
+clean run; `3221226505` (0xC0000409) is the process aborting, and the reason
+will be in the task's stdout log rather than the script's own.
 
 ## Jimmy's loop
 
@@ -110,6 +129,11 @@ says exactly which cells disagree.
 Shipped 2026-08-24/25: schema widening for insert beats (reel 006 uses them),
 the ✅ poller and auto-posting across five platform integrations, nightly
 analytics feeding the miner, and `npm run doctor`.
+
+Shipped 2026-08-27: the poller actually runs on its schedule (it had been
+crashing on every firing since it was registered — `DECISIONS.md` 2026-08-27),
+and reel 006 became the first to publish itself end to end, to YouTube,
+Instagram and the Facebook Page.
 
 Next, in rough order:
 

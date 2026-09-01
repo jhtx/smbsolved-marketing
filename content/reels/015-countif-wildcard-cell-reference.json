@@ -1,0 +1,192 @@
+{
+  "id": "015",
+  "slug": "countif-wildcard-cell-reference",
+  "title": "COUNTIF returns 0 when the vendor name is buried in the bank memo",
+  "hook": {
+    "lead": "CINTAS",
+    "body": "in two bank memos.\nCOUNTIF finds 0."
+  },
+  "payoff": {
+    "headline": "The reference goes\noutside the quotes",
+    "sub": "Keep the asterisks where they are and join the cell on with ampersands."
+  },
+  "sheet": {
+    "rows": [
+      {
+        "n": 1,
+        "a": "Vendor",
+        "b": "Txns",
+        "hdr": true,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 2,
+        "a": "CINTAS",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 3,
+        "a": "GRAINGER",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 4,
+        "a": "FEDEX",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 5,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "none"
+      },
+      {
+        "n": 6,
+        "a": "Bank Memo",
+        "b": "Amount",
+        "hdr": true,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 7,
+        "a": "ACH CINTAS CORP 8841",
+        "b": "412.60",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 8,
+        "a": "GRAINGER 0392 SUPPLY",
+        "b": "1,208.15",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 9,
+        "a": "ACH CINTAS CORP 9014",
+        "b": "388.20",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 10,
+        "a": "FEDEX 771 SHIPPING",
+        "b": "96.40",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      }
+    ],
+    "target": "B2",
+    "fillDown": {
+      "3": "1",
+      "4": "1"
+    }
+  },
+  "formulas": {
+    "before": {
+      "cell": "B2",
+      "text": "=COUNTIF($A$7:$A$10,\"*A2*\")",
+      "expected": "0",
+      "isError": false
+    },
+    "after": {
+      "cell": "B2",
+      "text": "=COUNTIF($A$7:$A$10,\"*\"&A2&\"*\")",
+      "expected": "2",
+      "isError": false
+    }
+  },
+  "script": [
+    {
+      "vo": "Cintas shows up in two bank memos. COUNTIF finds zero.",
+      "cue": "hook"
+    },
+    {
+      "vo": "Vendor list up top, one row each.",
+      "caption": "Vendors, one row each.",
+      "cue": "revealTop"
+    },
+    {
+      "vo": "Below that, the bank feed. The vendor name's buried in reference junk.",
+      "caption": "The memos below bury\nthe vendor name.",
+      "cue": "revealBottom"
+    },
+    {
+      "vo": "So you point COUNTIF at the memos and put asterisks around A2, inside the quotes.",
+      "caption": "Asterisks around A2.\nInside the quotes.",
+      "cue": "typeFormula"
+    },
+    {
+      "vo": "Zero.",
+      "caption": "Zero.",
+      "cue": "showError"
+    },
+    {
+      "vo": "Inside the quotes, A2 stopped being a reference. Excel went looking for the letter A and a two. The reference has to sit outside the quotes.",
+      "caption": "Excel looked for A2 itself.\nMove A2 out of the quotes.",
+      "cue": "markError"
+    },
+    {
+      "vo": "The asterisks still work as wildcards, so keep them and join A2 on with ampersands.",
+      "caption": "Join it on with\n*ampersands*.",
+      "cue": "typeFix"
+    },
+    {
+      "vo": "Two hits for Cintas.",
+      "caption": "Two hits.",
+      "cue": "showResult"
+    },
+    {
+      "vo": "Fill it down and every vendor gets a real count.",
+      "caption": "Fill down.\nReal counts.",
+      "cue": "fillDown"
+    },
+    {
+      "vo": "Inside the quotes, A2 is just two characters. The reference goes outside.",
+      "cue": "payoff"
+    }
+  ],
+  "post": {
+    "title": "COUNTIF returns 0 when the vendor name is buried in the memo",
+    "description": "countif with a wildcard and a cell reference returns 0\nA cell reference inside quotes is plain text to Excel, so put it outside the quotes and join it on with ampersands. Save this for the next bank feed reconciliation.",
+    "hashtags": [
+      "excel",
+      "accounting",
+      "exceltips",
+      "countif",
+      "bookkeeping"
+    ]
+  },
+  "verification": {
+    "excel": "16.0.20326",
+    "on": "2026-08-28",
+    "formulasHash": "4ed74156dd9bc340"
+  }
+}

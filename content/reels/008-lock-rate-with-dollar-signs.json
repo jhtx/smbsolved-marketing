@@ -1,0 +1,197 @@
+{
+  "id": "008",
+  "slug": "lock-rate-with-dollar-signs",
+  "title": "Dragging a formula down makes every row point at a different rate",
+  "hook": {
+    "lead": "378.00",
+    "body": "six hours cost more\nthan seven"
+  },
+  "payoff": {
+    "headline": "LOCK IT\nOR IT\nWALKS",
+    "sub": "If it shouldn't move, put dollar signs on it."
+  },
+  "sheet": {
+    "rows": [
+      {
+        "n": 1,
+        "a": "Hours",
+        "b": "Labor cost",
+        "hdr": true,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 2,
+        "a": "7.50",
+        "b": "315.00",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 3,
+        "a": "6.00",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 4,
+        "a": "8.25",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 5,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "none"
+      },
+      {
+        "n": 6,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "none"
+      },
+      {
+        "n": 7,
+        "a": "Rate table",
+        "b": "Rate",
+        "hdr": true,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 8,
+        "a": "Standard",
+        "b": "42.00",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 9,
+        "a": "Overtime",
+        "b": "63.00",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 10,
+        "a": "Mileage",
+        "b": "0.67",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "bottom"
+      }
+    ],
+    "target": "B3",
+    "fillDown": {
+      "4": "346.50"
+    }
+  },
+  "formulas": {
+    "before": {
+      "cell": "B3",
+      "text": "=A3*B9",
+      "expected": "378.00",
+      "isError": false,
+      "numberFormat": "#,##0.00"
+    },
+    "after": {
+      "cell": "B3",
+      "text": "=A3*$B$8",
+      "expected": "252.00",
+      "isError": false,
+      "numberFormat": "#,##0.00"
+    }
+  },
+  "script": [
+    {
+      "vo": "You typed it once, dragged it down, and six hours cost more than seven.",
+      "cue": "hook"
+    },
+    {
+      "vo": "Hours in A, labor cost in B.",
+      "caption": "Hours in A.\nLabor cost in B.",
+      "cue": "revealTop"
+    },
+    {
+      "vo": "The rates sit in a small table underneath. Standard, overtime, mileage.",
+      "caption": "Rate table underneath.\nStandard, overtime, mileage.",
+      "cue": "revealBottom"
+    },
+    {
+      "vo": "Row two was hours times the standard rate. Then the drag hit row three.",
+      "caption": "Then the drag hit row 3.",
+      "cue": "typeFormula"
+    },
+    {
+      "vo": "Six hours at the overtime rate.",
+      "caption": "Six hours at the\novertime rate.",
+      "cue": "showError"
+    },
+    {
+      "vo": "The reference moved with the formula, one row down.",
+      "caption": "The reference moved\nwith the formula.",
+      "cue": "markError"
+    },
+    {
+      "vo": "The hours should move. The rate shouldn't. So lock the rate cell with dollar signs.",
+      "caption": "Lock the rate cell\nwith *$*."
+    },
+    {
+      "vo": "Dollar signs on the row and the column.",
+      "caption": "Row and column, both.",
+      "cue": "typeFix"
+    },
+    {
+      "vo": "252.00. Standard rate, like it should have been.",
+      "caption": "252.00. Standard rate.",
+      "cue": "showResult"
+    },
+    {
+      "vo": "F4 cycles the dollar signs. Drag it now and every row still reads B8.",
+      "caption": "Every row holds B8.",
+      "cue": "fillDown"
+    },
+    {
+      "vo": "Anything that shouldn't move needs dollar signs.",
+      "cue": "payoff"
+    }
+  ],
+  "post": {
+    "title": "Dragged the formula down and every row grabbed a different rate",
+    "description": "formula changes cells when i drag it down in excel\nA reference without dollar signs shifts one row for every row you drag, so lock the cell you always want it to read. Save this one.",
+    "hashtags": [
+      "excel",
+      "exceltips",
+      "spreadsheets",
+      "formulas",
+      "accounting"
+    ]
+  },
+  "verification": {
+    "excel": "16.0.20326",
+    "on": "2026-08-28",
+    "formulasHash": "929f24bd2e6648e5"
+  }
+}

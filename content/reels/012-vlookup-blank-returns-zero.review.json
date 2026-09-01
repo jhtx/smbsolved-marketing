@@ -1,0 +1,87 @@
+{
+  "verdict": "pass",
+  "findings": [
+    {
+      "severity": "minor",
+      "where": "hook.body \"and nothing was\\never reported\"",
+      "issue": "Ambiguous. \"Nothing was ever reported\" reads as \"nobody flagged the problem\" rather than \"nobody submitted a balance for that account.\" It also repeats the \"0.00 + contradiction\" shape of reel 002 (\"0.00 March totals zero. The GL says otherwise.\"), which is the second hook in the set led by 0.00.",
+      "fix": "Rewrite the body so it names the missing balance, and consider a lead other than 0.00 so it doesn't echo 002. Something in the shape of \"0.00 / but nobody sent a balance\" or move away from the number lead entirely."
+    },
+    {
+      "severity": "minor",
+      "where": "script[2].caption \"Row 2100 has no amount.\"",
+      "issue": "2100 is an account number, not a row number. On a sheet that shows real row numbers 1-10 down the gutter, calling it \"Row 2100\" invites a double take.",
+      "fix": "\"Acct 2100 has no amount.\" (22 chars, still inside the limit)."
+    },
+    {
+      "severity": "minor",
+      "where": "script[6].vo (typeFix)",
+      "issue": "The function is never named out loud. \"Test the result first\" and \"print something a person can read\" describe the idea but a viewer can't repeat it. IF only appears in payoff.sub.",
+      "fix": "Name it: \"So wrap it in IF. If the lookup comes back empty, print something a person can read.\""
+    },
+    {
+      "severity": "minor",
+      "where": "script[9].vo (payoff)",
+      "issue": "\"zero is a number your owner will believe\" is off for the stated audience and \"your owner\" is an odd possessive. Also the payoff VO and payoff.headline carry slightly different ideas.",
+      "fix": "Tighten to something a controller would text: \"An empty source cell comes back as a real zero, and a zero gets signed off.\""
+    },
+    {
+      "severity": "minor",
+      "where": "payoff.headline \"BLANK IN\\nZERO OUT\\nEVERY TIME\"",
+      "issue": "Three lines where prior payoffs land in one or two (\"VLOOKUP COUNTS COLUMNS\", \"TRIM WON'T TOUCH CHAR 160\"). \"EVERY TIME\" adds nothing.",
+      "fix": "Cut to \"BLANK IN\\nZERO OUT\"."
+    },
+    {
+      "severity": "minor",
+      "where": "payoff.sub \"...says so on the page.\"",
+      "issue": "\"Says so on the page\" is a stiff construction nobody says.",
+      "fix": "\"Wrap the lookup in IF so an empty source cell shows as empty, not as a balance.\""
+    }
+  ],
+  "hook": {
+    "score": 4,
+    "note": "Real symptom, concrete, short, and it is a close-week experience: an account shows 0.00 because nobody submitted a balance. Loses a point for the ambiguous second clause and for being the second hook in the set fronted by 0.00."
+  },
+  "claims": [
+    {
+      "claim": "VLOOKUP against an empty source cell returns 0",
+      "verdict": "true",
+      "note": "Exact-match VLOOKUP pointing at a blank cell returns 0, and the #,##0.00 format displays it as 0.00. Matches the verified expected value."
+    },
+    {
+      "claim": "\"Nothing's missing here. VLOOKUP found the row.\"",
+      "verdict": "true",
+      "note": "A2 = 2100 matches A8, so no #N/A. The reel correctly separates \"no match\" from \"match with empty cell,\" which is the whole point."
+    },
+    {
+      "claim": "VLOOKUP(...)=\"\" is TRUE when the looked-up cell is empty",
+      "verdict": "true",
+      "note": "Excel treats the empty-cell result as equal to \"\" in that comparison. Consistent with the verified \"No data\" output."
+    },
+    {
+      "claim": "\"A real zero in the export still shows as zero\"",
+      "verdict": "true",
+      "note": "0=\"\" evaluates FALSE in Excel, so a genuine 0 falls through to the second VLOOKUP and prints 0.00. Not shown on screen, but the statement is correct."
+    },
+    {
+      "claim": "No version caveat needed",
+      "verdict": "true",
+      "note": "IF and VLOOKUP with a nested duplicate lookup work in 2016/2019 and 365. No dynamic arrays, no LET, no IFERROR-only behaviour."
+    },
+    {
+      "claim": "Data realism (accts 2100/2150/2400, 3,120.00 / 1,045.00, accrued liability recon vs trial balance export)",
+      "verdict": "true",
+      "note": "Plausible accrued-liability range and non-round amounts. Reads like a real close recon against a TB export."
+    },
+    {
+      "claim": "One concept only",
+      "verdict": "true",
+      "note": "Blank source cell returning zero, and one fix for it. Nothing about #N/A handling or IFERROR creeps in."
+    },
+    {
+      "claim": "Post copy compliant",
+      "verdict": "true",
+      "note": "First line \"vlookup returns 0 instead of blank\" is a real search phrase, 5 hashtags, CTA limited to \"save this.\" No Steda or consulting mention anywhere."
+    }
+  ]
+}

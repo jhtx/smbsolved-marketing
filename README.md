@@ -95,6 +95,21 @@ asset and fetching it back with no credentials, the way Instagram will.
 A platform with no credentials is recorded "skipped, post by hand" naming the
 missing variable, so a half-configured setup is obvious rather than silent.
 
+### When you react ✅ and nothing happens
+
+`npm run poll -- --dry-run` first: it reads the live reaction and prints what
+it would post, so it separates "the approval isn't being seen" from "the
+posting is failing".
+
+If that looks right and the scheduled job still posts nothing, the job itself
+is dying rather than the code. Check
+`Get-ScheduledTaskInfo -TaskName smbsolved-reels-poll` — `LastTaskResult` 0 is
+a clean run, and `3221226505` is the process aborting. Then read
+`out/logs/poll-task.log` (the task's stdout) rather than `out/logs/poll.log`
+(the script's own record), because a job that dies early never reaches the
+second one. That exact failure cost two days in August 2026; `DECISIONS.md`
+2026-08-27 has the reason and the rule that prevents it.
+
 Around the daily loop:
 
 ```bash

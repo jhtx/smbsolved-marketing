@@ -1,0 +1,47 @@
+{
+  "stem": "008-lock-rate-with-dollar-signs",
+  "reelPath": "content/reels/008-lock-rate-with-dollar-signs.json",
+  "mp4": "out/008-lock-rate-with-dollar-signs.mp4",
+  "stills": [
+    "C:\\projects\\smbsolved-marketing\\out\\008-lock-rate-with-dollar-signs-hook.png",
+    "C:\\projects\\smbsolved-marketing\\out\\008-lock-rate-with-dollar-signs-result.png"
+  ],
+  "deliveredAt": "2026-08-28T11:36:59.938Z",
+  "slack": {
+    "channel": "C0BPQRPQMK5",
+    "ts": "1787917018.552499",
+    "permalink": "https://smb-solved.slack.com/archives/C0BPQRPQMK5/p1787917018552499"
+  },
+  "posts": {
+    "youtube": {
+      "state": "posted",
+      "at": "2026-08-31T15:50:05.335Z",
+      "id": "ZiKzRyWUV9s",
+      "url": "https://www.youtube.com/shorts/ZiKzRyWUV9s"
+    },
+    "instagram": {
+      "state": "posted",
+      "at": "2026-08-31T15:51:07.873Z",
+      "id": "17905283481491018",
+      "url": "https://www.instagram.com/reel/DctcrrdjFw2/"
+    },
+    "facebook": {
+      "state": "posted",
+      "at": "2026-08-31T15:51:19.605Z",
+      "id": "1556068685730806",
+      "url": "https://www.facebook.com/reel/1556068685730806/"
+    },
+    "linkedin": {
+      "state": "skipped",
+      "at": "2026-08-31T15:51:19.606Z",
+      "note": "held: linkedin is not in AUTOPOST, so you post this one by hand"
+    },
+    "tiktok": {
+      "state": "skipped",
+      "at": "2026-08-31T15:51:19.606Z",
+      "note": "held: tiktok is not in AUTOPOST, so you post this one by hand"
+    }
+  },
+  "approvedAt": "2026-08-31T15:50:03.110Z",
+  "hostedUrl": "https://github.com/jhtx/smbsolved-marketing/releases/download/reel-008-lock-rate-with-dollar-signs/008-lock-rate-with-dollar-signs.mp4"
+}

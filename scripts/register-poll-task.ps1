@@ -15,9 +15,14 @@ $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 New-Item -ItemType Directory -Force -Path (Join-Path $repo "out\logs") | Out-Null
 
+# Redirect to poll-task.log, NOT poll.log. cmd.exe holds the redirect target
+# open for the whole run, and poll.ts appends to poll.log itself; pointing both
+# at one file made every scheduled run die with EBUSY before it posted
+# anything. The other tasks already keep the two apart (run.ts -> run.log,
+# task -> task.log); this one did not.
 $npx = (Get-Command npx.cmd -ErrorAction Stop).Source
 $action = New-ScheduledTaskAction -Execute "cmd.exe" `
-  -Argument "/c `"`"$npx`" tsx pipeline/poll.ts >> out\logs\poll.log 2>&1`"" `
+  -Argument "/c `"`"$npx`" tsx pipeline/poll.ts >> out\logs\poll-task.log 2>&1`"" `
   -WorkingDirectory $repo
 
 # Repeat forever from the top of the hour; the daily reel lands at 06:30, so a

@@ -533,3 +533,38 @@ hours) is already built and waiting behind the switch. TikTok cannot publish
 through its API at all until the app passes content-posting audit, so
 automating it would only move a draft into an inbox the owner still has to
 open.
+
+## 2026-08-27 — A scheduled task never redirects into its own script's log
+
+The ✅ poller ran every ten minutes for two days and posted nothing. Reels 006
+and 007 sat approved in Slack the whole time. Nothing was wrong with Slack, the
+reaction, the tokens or the platform code: `npm run poll` by hand worked
+perfectly, which is exactly why it went unnoticed.
+
+The task ran `cmd.exe /c "... poll.ts >> out\logs\poll.log 2>&1"` while
+`poll.ts` appended to `out/logs/poll.log` itself. cmd holds the redirect target
+open for the life of the run, so the script's own append hit `EBUSY` on Windows.
+The throw landed on the first `log()` call in `handle()` — which sits *before*
+`postAll()` — so every firing died in the gap between reading the approval and
+posting, aborting with 0xC0000409. A manual run has no redirect and no
+collision, so the bug was invisible from the terminal.
+
+Two changes, because either alone would have left the trap in place:
+
+- The poll task redirects to `poll-task.log`. Every other task already kept the
+  two apart (`run.ts` writes `run.log`, its task captures `task.log`); the
+  poller was the only one pointing both at one name. That is now a rule in the
+  runbook rather than an accident of naming.
+- `log()` writes stdout first and can never throw. It runs on the path to an
+  outward-facing post, and losing a log line must never cost a post. Verified by
+  re-creating the collision deliberately: the run now completes and says
+  `(poll.log unwritable, continuing: EBUSY…)`.
+
+The general lesson is the one `npm run doctor` already encodes for credentials:
+a component that works when you run it by hand is not evidence it works the way
+it actually runs. The scheduled path is a different path and needs proving on
+its own terms. `LastTaskResult` in Task Scheduler was saying 0xC0000409 for two
+days and nobody was reading it, so the runbook now says to look there first.
+
+First reel to publish itself end to end: 006, on 2026-08-27, to YouTube,
+Instagram and the Facebook Page.

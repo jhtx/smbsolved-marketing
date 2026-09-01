@@ -1,0 +1,194 @@
+{
+  "id": "012",
+  "slug": "vlookup-blank-returns-zero",
+  "title": "VLOOKUP shows 0.00 when the source cell is empty",
+  "hook": {
+    "lead": "0.00",
+    "body": "and nothing was\never reported"
+  },
+  "payoff": {
+    "headline": "BLANK IN\nZERO OUT\nEVERY TIME",
+    "sub": "Wrap the lookup in IF so an empty source cell says so on the page."
+  },
+  "sheet": {
+    "rows": [
+      {
+        "n": 1,
+        "a": "Acct",
+        "b": "Balance",
+        "hdr": true,
+        "right": false,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 2,
+        "a": "2100",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 3,
+        "a": "2150",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 4,
+        "a": "2400",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "top"
+      },
+      {
+        "n": 5,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "none"
+      },
+      {
+        "n": 6,
+        "a": "",
+        "b": "",
+        "hdr": false,
+        "right": false,
+        "c": "",
+        "group": "none"
+      },
+      {
+        "n": 7,
+        "a": "Acct",
+        "b": "Amount",
+        "hdr": true,
+        "right": false,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 8,
+        "a": "2100",
+        "b": "",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 9,
+        "a": "2150",
+        "b": "3,120.00",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "bottom"
+      },
+      {
+        "n": 10,
+        "a": "2400",
+        "b": "1,045.00",
+        "hdr": false,
+        "right": true,
+        "c": "",
+        "group": "bottom"
+      }
+    ],
+    "target": "B2",
+    "fillDown": {
+      "3": "3,120.00",
+      "4": "1,045.00"
+    }
+  },
+  "formulas": {
+    "before": {
+      "cell": "B2",
+      "text": "=VLOOKUP(A2,$A$8:$B$10,2,FALSE)",
+      "expected": "0.00",
+      "isError": false,
+      "numberFormat": "#,##0.00"
+    },
+    "after": {
+      "cell": "B2",
+      "text": "=IF(VLOOKUP(A2,$A$8:$B$10,2,FALSE)=\"\",\"No data\",VLOOKUP(A2,$A$8:$B$10,2,FALSE))",
+      "expected": "No data",
+      "isError": false,
+      "numberFormat": "#,##0.00"
+    }
+  },
+  "script": [
+    {
+      "vo": "Your VLOOKUP comes back 0.00, and nobody ever reported a number.",
+      "cue": "hook"
+    },
+    {
+      "vo": "Accrued liability accounts on the close recon, pulling balances.",
+      "caption": "Close recon pulling\naccrued balances.",
+      "cue": "revealTop"
+    },
+    {
+      "vo": "The trial balance export sits underneath, and the amount for 2100 never came across.",
+      "caption": "Trial balance below.\nRow 2100 has no amount.",
+      "cue": "revealBottom"
+    },
+    {
+      "vo": "Just a plain VLOOKUP, exact match.",
+      "caption": "Just a plain VLOOKUP,\nexact match.",
+      "cue": "typeFormula"
+    },
+    {
+      "vo": "And it hands back zero.",
+      "caption": "It hands back 0.00.",
+      "cue": "showError"
+    },
+    {
+      "vo": "Nothing's missing here. VLOOKUP found the row. The amount cell was empty, and an empty cell comes back as zero.",
+      "caption": "Found the row.\nAmount cell was empty.",
+      "cue": "markError"
+    },
+    {
+      "vo": "So test the result first. If it comes back empty, print something a person can read instead.",
+      "caption": "Empty source, say\n*No data*.",
+      "cue": "typeFix"
+    },
+    {
+      "vo": "Now the gap looks like a gap. A real zero in the export still shows as zero, which is what you want.",
+      "caption": "Now the gap looks\nlike a gap.",
+      "cue": "showResult"
+    },
+    {
+      "vo": "Fill it down and the actual amounts still land.",
+      "caption": "Fill down. Real\namounts still land.",
+      "cue": "fillDown"
+    },
+    {
+      "vo": "An empty source cell comes back as zero, and zero is a number your owner will believe.",
+      "cue": "payoff"
+    }
+  ],
+  "post": {
+    "title": "VLOOKUP shows 0 when the source cell is empty",
+    "description": "vlookup returns 0 instead of blank\nAn empty amount in the source table comes back as a real zero, so the report reads like a settled balance. Test the lookup with IF and the gap stays visible. Save this for close.",
+    "hashtags": [
+      "excel",
+      "accounting",
+      "exceltips",
+      "vlookup",
+      "monthendclose"
+    ]
+  },
+  "verification": {
+    "excel": "16.0.20326",
+    "on": "2026-08-26",
+    "formulasHash": "fcc040f1ce65545a"
+  }
+}

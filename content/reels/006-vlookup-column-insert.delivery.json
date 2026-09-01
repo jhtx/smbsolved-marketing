@@ -12,5 +12,36 @@
     "ts": "1787622600.814309",
     "permalink": "https://smb-solved.slack.com/archives/C0BPQRPQMK5/p1787622600814309"
   },
-  "posts": {}
+  "posts": {
+    "youtube": {
+      "state": "posted",
+      "at": "2026-08-28T01:20:04.685Z",
+      "id": "CJM5ABQLwdk",
+      "url": "https://www.youtube.com/shorts/CJM5ABQLwdk"
+    },
+    "instagram": {
+      "state": "posted",
+      "at": "2026-08-28T01:20:47.117Z",
+      "id": "17954479095231606",
+      "url": "https://www.instagram.com/reel/DckKvFJCqGh/"
+    },
+    "facebook": {
+      "state": "posted",
+      "at": "2026-08-28T01:20:59.822Z",
+      "id": "1399889722241879",
+      "url": "https://www.facebook.com/reel/1399889722241879/"
+    },
+    "linkedin": {
+      "state": "skipped",
+      "at": "2026-08-28T01:20:59.822Z",
+      "note": "held: linkedin is not in AUTOPOST, so you post this one by hand"
+    },
+    "tiktok": {
+      "state": "skipped",
+      "at": "2026-08-28T01:20:59.823Z",
+      "note": "held: tiktok is not in AUTOPOST, so you post this one by hand"
+    }
+  },
+  "approvedAt": "2026-08-28T01:20:02.649Z",
+  "hostedUrl": "https://github.com/jhtx/smbsolved-marketing/releases/download/reel-006-vlookup-column-insert/006-vlookup-column-insert.mp4"
 }
