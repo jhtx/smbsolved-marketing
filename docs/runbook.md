@@ -1,6 +1,6 @@
 # Runbook
 
-What runs, when, and what Jimmy actually does. Current as of 2026-08-27.
+What runs, when, and what Jimmy actually does. Current as of 2026-08-31.
 Reasoning for every rule: `DECISIONS.md`.
 
 ## The machines
@@ -15,6 +15,29 @@ Reasoning for every rule: `DECISIONS.md`.
 
 All five need the PC on (sleep is fine) and Jimmy logged in (lock screen is
 fine). A missed daily run pages via healthchecks → Slack.
+
+### The healthchecks check
+
+`run.ts` pings `HEALTHCHECK_URL` at the end of every run, and only `run.ts`
+pings it. So the check has to be set to the same schedule the task is on:
+
+| Setting | Value |
+|---|---|
+| Schedule | **Cron**, `30 6 * * 1-5` |
+| Timezone | America/Chicago |
+| Grace | 2 hours |
+
+Set it on healthchecks.io, in the check's own settings. On a **Period** of one
+day it expects a ping every 24 hours including Saturday and Sunday, when
+nothing is scheduled to run — so Friday's run is followed by a DOWN alert on
+Saturday lunchtime, every single weekend, and it clears itself Monday morning.
+Grace of 2 hours matches the task's `ExecutionTimeLimit`, so a run that hangs
+until Task Scheduler kills it alerts at the moment it is killed.
+
+A success ping means **a reel was delivered**, not that the script exited
+cleanly. A parked topic and an empty backlog both exit 0, and both ping
+`/fail`, because a green check on a day with no reel is the exact silence the
+check exists to break. Both also post to Slack saying which it was.
 
 ### Logs, and the one rule about them
 

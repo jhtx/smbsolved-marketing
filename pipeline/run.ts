@@ -29,6 +29,18 @@ const flag = (n: string) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 
+/**
+ * `ok` means A REEL WAS DELIVERED, not that the process exited cleanly. A
+ * parked topic and an empty backlog both exit 0 and both are days with no
+ * reel, so both report failure: a green check on a day that produced nothing
+ * is precisely the silence this is here to break.
+ *
+ * The other half lives in the healthchecks.io check itself, which must be on
+ * a weekday cron (`30 6 * * 1-5`, America/Chicago) rather than a 1-day
+ * period. A period expects a ping every 24h including Saturday and Sunday,
+ * when nothing is scheduled to run. See the runbook and DECISIONS.md
+ * 2026-08-31.
+ */
 async function heartbeat(ok: boolean, note: string) {
   const url = process.env.HEALTHCHECK_URL;
   if (!url) return;
@@ -58,7 +70,10 @@ async function main() {
     if (!item) {
       log('backlog empty — nothing to do');
       await notify('Reels: the backlog has no unchecked items. Add symptoms to content/backlog.md.');
-      await heartbeat(true, 'backlog empty');
+      // No reel today. The heartbeat says what happened, not whether the
+      // process exited cleanly — a green check on a day with no reel is the
+      // failure mode this exists to catch (DECISIONS.md 2026-08-31).
+      await heartbeat(false, 'backlog empty — no reel produced');
       return;
     }
     id = item.id;
@@ -68,7 +83,7 @@ async function main() {
     if ('parked' in r) {
       log(r.parked);
       await notify(`Reels: ${r.parked}. Topic: "${item.text}"`);
-      await heartbeat(true, r.parked);
+      await heartbeat(false, r.parked);
       return;
     }
     reelPath = r.path;

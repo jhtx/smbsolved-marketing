@@ -610,3 +610,37 @@ The general point is the one the insert beat made in 2026-08-24: when the
 reviewer keeps asking for something true about Excel that the schema cannot
 express, that is a schema gap, not a writer that needs another attempt. Three
 attempts at a dollar apiece is the cost of finding that out late.
+
+## 2026-08-31 — The heartbeat reports whether a REEL happened, not whether the process exited
+
+Two alerting defects, found together when Healthchecks paged "smbsolved-reels
+is DOWN" on a Saturday and the pipeline turned out to be entirely healthy.
+
+**The weekend false alarm.** `run.ts` is the only thing that pings
+`HEALTHCHECK_URL`, and Task Scheduler runs it weekdays 06:30. The check was
+configured with a Period of one day, which expects a ping every 24 hours
+including Saturday and Sunday. So Friday's ping was always followed by a DOWN
+alert on Saturday lunchtime, holding through Sunday and clearing itself Monday
+morning. Every weekend, by construction. The check is now a cron,
+`30 6 * * 1-5` in America/Chicago with 2 hours of grace, which is the same
+schedule the task is actually on; the grace matches the task's
+`ExecutionTimeLimit`, so a run that hangs until Task Scheduler kills it alerts
+at the moment it is killed. That setting lives on healthchecks.io, so it is
+written down in the runbook rather than in code.
+
+**The one that mattered more.** A parked topic pinged SUCCESS. Reel 016 burned
+all three writer attempts that Monday, produced nothing, exited 0 and left the
+check green — the owner found out by asking, not by being told. Same for an
+empty backlog. The file header had claimed since it was written that "a parked
+topic or a failure is posted to Slack and the heartbeat reports failure", so
+the code had been contradicting its own documented intent.
+
+`ok` now means a reel was delivered. Park and empty-backlog ping `/fail`. Both
+still post to Slack saying which happened, so the Slack message carries the
+detail and the check carries the fact that today produced nothing.
+
+The rule behind it: a health check on a process that exists to produce
+something must assert the thing was produced. Exit code 0 is the process's
+opinion of itself, and this pipeline has two ordinary paths that exit 0 with
+nothing to show. Those are exactly the days worth hearing about, because a
+crash is loud anyway and a quiet nothing is not.

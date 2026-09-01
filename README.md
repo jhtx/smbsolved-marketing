@@ -60,7 +60,12 @@ powershell -ExecutionPolicy Bypass -File scripts\register-task.ps1
 ```
 
 Set `HEALTHCHECK_URL` in `.env.local` (healthchecks.io, free) so a missed run
-pages you; `run.ts` pings it after every run and `/fail` on failure.
+pages you; `run.ts` pings it after every run and `/fail` on failure. Set that
+check to a weekday **cron** (`30 6 * * 1-5`, America/Chicago, 2h grace), not a
+one-day period — a period expects a ping on Saturday and Sunday too and goes
+DOWN every weekend. A success ping means a reel was delivered: a parked topic
+or an empty backlog reports failure, because a green check on a day with no
+reel is the silence the check is for. Details in `docs/runbook.md`.
 
 ## Posting
 
